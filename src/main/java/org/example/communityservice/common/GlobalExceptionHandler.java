@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<CommonResponseDto<Object>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e){
         ErrorInfoDto error = new ErrorInfoDto(null, "invalid_request_body");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponseDto<>("invalid_request", new ErrorResponseDto(List.of(error))));
+    }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<CommonResponseDto<Object>> handleNoResourceFoundException(NoResourceFoundException e){
+        ErrorInfoDto error = new ErrorInfoDto(e.getHttpMethod().toString(), e.getResourcePath());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponseDto<>("invalid_request", new ErrorResponseDto(List.of(error))));
     }
 
     @ExceptionHandler(Exception.class)

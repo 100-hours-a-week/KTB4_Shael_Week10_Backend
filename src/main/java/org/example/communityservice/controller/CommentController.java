@@ -3,39 +3,38 @@ package org.example.communityservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.communityservice.dto.comment.CommentRequestDto;
-import org.example.communityservice.dto.comment.CommentResponseDto;
+import org.example.communityservice.dto.comment.response.CommentResponseDto;
 import org.example.communityservice.common.dto.CommonResponseDto;
+import org.example.communityservice.dto.comment.response.CommentUpdateResponseDto;
 import org.example.communityservice.service.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{userUuid}/posts/{postUuid}/comment")
+@RequestMapping("/{userId}/posts/{postId}/comment")
 public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommonResponseDto<CommentResponseDto>> createComment(@PathVariable UUID userUuid, @PathVariable UUID postUuid, @Valid @RequestBody CommentRequestDto commentRequestDto){
-        CommentResponseDto commentResponseDto = commentService.createComment(userUuid, postUuid, commentRequestDto);
+    public ResponseEntity<CommonResponseDto<CommentResponseDto>> createComment(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody CommentRequestDto commentRequestDto){
+        CommentResponseDto commentResponseDto = commentService.createComment(userId, postId, commentRequestDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", commentResponseDto));
     }
 
-    @PatchMapping("/{commentUuid}")
-    public ResponseEntity<CommonResponseDto<CommentResponseDto>> updateComment(@PathVariable UUID userUuid, @PathVariable UUID postUuid, @PathVariable UUID commentUuid, @Valid @RequestBody CommentRequestDto commentRequestDto){
-        CommentResponseDto commentResponseDto = commentService.updateComment(userUuid, postUuid, commentUuid, commentRequestDto);
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<CommonResponseDto<CommentUpdateResponseDto>> updateComment(@PathVariable Long userId, @PathVariable Long postId, @PathVariable Long commentId, @Valid @RequestBody CommentRequestDto commentRequestDto){
+        CommentUpdateResponseDto commentUpdateResponseDto = commentService.updateComment(userId, postId, commentId, commentRequestDto);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("update_success", commentResponseDto));
+        return ResponseEntity.ok(new CommonResponseDto<>("update_success", commentUpdateResponseDto));
     }
 
-    @DeleteMapping("/{commentUuid}")
-    public ResponseEntity<CommonResponseDto<Void>> deleteComment(@PathVariable UUID userUuid, @PathVariable UUID postUuid, @PathVariable UUID commentUuid){
-        commentService.deleteComment(userUuid, postUuid, commentUuid);
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<CommonResponseDto<Void>> deleteComment(@PathVariable Long userId, @PathVariable Long postId, @PathVariable Long commentId){
+        commentService.deleteComment(userId, postId, commentId);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("register_success", null));
+        return ResponseEntity.ok(new CommonResponseDto<>("delete_success", null));
     }
 }

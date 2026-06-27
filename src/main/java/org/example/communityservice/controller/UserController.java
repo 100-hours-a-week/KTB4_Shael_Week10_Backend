@@ -3,13 +3,16 @@ package org.example.communityservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.communityservice.common.dto.CommonResponseDto;
-import org.example.communityservice.dto.user.*;
+import org.example.communityservice.dto.user.request.UserCreateRequestDto;
+import org.example.communityservice.dto.user.request.UserInfoUpdateRequestDto;
+import org.example.communityservice.dto.user.request.UserLoginRequestDto;
+import org.example.communityservice.dto.user.request.UserPasswordUpdateRequestDto;
+import org.example.communityservice.dto.user.response.UserInfoResponseDto;
+import org.example.communityservice.dto.user.response.UserLoginResponseDto;
 import org.example.communityservice.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,10 +21,10 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<CommonResponseDto<UserResponseDto>> login(@Valid @RequestBody UserLoginRequestDto userLoginRequestDto) {
-        UserResponseDto userResponseDto = userService.login(userLoginRequestDto);
+    public ResponseEntity<CommonResponseDto<UserLoginResponseDto>> login(@Valid @RequestBody UserLoginRequestDto userLoginRequestDto) {
+        UserLoginResponseDto userLoginResponseDto = userService.login(userLoginRequestDto);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("login_success", userResponseDto));
+        return ResponseEntity.ok(new CommonResponseDto<>("login_success", userLoginResponseDto));
     }
 
     @PostMapping("/signup")
@@ -31,30 +34,30 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", null));
     }
 
-    @GetMapping("/user/{userUuid}/info")
-    public ResponseEntity<CommonResponseDto<UserResponseDto>> showInfo(@PathVariable UUID userUuid){
-        UserResponseDto userResponseDto = userService.showInfo(userUuid);
+    @GetMapping("/user/{userId}/info")
+    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> showInfo(@PathVariable Long userId){
+        UserInfoResponseDto userInfoResponseDto = userService.showInfo(userId);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", userResponseDto));
+        return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", userInfoResponseDto));
     }
 
-    @PatchMapping("/user/{userUuid}/info")
-    public ResponseEntity<CommonResponseDto<UserResponseDto>> updateInfo(@PathVariable UUID userUuid, @Valid @RequestBody UserInfoUpdateRequestDto userInfoUpdateRequestDto){
-        UserResponseDto userResponseDto = userService.updateInfo(userUuid, userInfoUpdateRequestDto);
+    @PatchMapping("/user/{userId}/info")
+    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> updateInfo(@PathVariable Long userId, @Valid @RequestBody UserInfoUpdateRequestDto userInfoUpdateRequestDto){
+        UserInfoResponseDto userInfoResponseDto = userService.updateInfo(userId, userInfoUpdateRequestDto);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("update_success", userResponseDto));
+        return ResponseEntity.ok(new CommonResponseDto<>("update_success", userInfoResponseDto));
     }
 
-    @PatchMapping("/user/{userUuid}/password")
-    public ResponseEntity<CommonResponseDto<Void>> updatePassword(@PathVariable UUID userUuid, @Valid @RequestBody UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
-        userService.updatePassword(userUuid, userPasswordUpdateRequestDto);
+    @PatchMapping("/user/{userId}/password")
+    public ResponseEntity<CommonResponseDto<Void>> updatePassword(@PathVariable Long userId, @Valid @RequestBody UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
+        userService.updatePassword(userId, userPasswordUpdateRequestDto);
 
         return ResponseEntity.ok(new CommonResponseDto<>("update_success", null));
     }
 
-    @DeleteMapping("/{userUuid}/withdrawal")
-    public ResponseEntity<CommonResponseDto<Void>> withdrawal(@PathVariable UUID userUuid){
-        userService.withdrawal(userUuid);
+    @DeleteMapping("/{userId}/withdrawal")
+    public ResponseEntity<CommonResponseDto<Void>> withdrawal(@PathVariable Long userId){
+        userService.withdrawal(userId);
 
         return ResponseEntity.ok(new CommonResponseDto<>("delete_success", null));
     }

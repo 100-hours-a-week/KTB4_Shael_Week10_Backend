@@ -1,4 +1,4 @@
-package org.example.communityservice.dto.user;
+package org.example.communityservice.dto.user.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

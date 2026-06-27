@@ -29,16 +29,16 @@ INSERT INTO posts (
       (4, 4, '프로젝트 회고', '기능 구현보다 설계가 더 어렵다는 걸 느꼈습니다.', '2026-06-02 14:30:00', NULL, 0, 0, 4);
 
 INSERT INTO post_images (
-    post_images_id,
+    post_image_id,
     post_id,
     post_image,
-    created_at,
-    updated_at
+    image_order
 ) VALUES
-      (1, 1, '/images/test_image.png', '2026-06-02 10:00:00', NULL),
-      (2, 1, '/images/test_image.png', '2026-06-02 10:01:00', NULL),
-      (3, 2, '/images/test_image.png', '2026-06-02 11:20:00', NULL),
-      (4, 3, '/images/test_image.png', '2026-06-02 12:10:00', NULL);
+      (1, 1, '/images/test_image.png', 1),
+      (2, 1, '/images/test_image.png', 2),
+      (3, 2, '/images/test_image.png', 1),
+      (4, 3, '/images/test_image.png', 1),
+      (5, 4, '/images/test_image.png', 1);
 
 INSERT INTO comments (
     comment_id,
@@ -59,7 +59,7 @@ INSERT INTO comments (
       (6, 3, NULL, 4, '김치찌개 좋네요. 저녁으로 먹어야겠어요.', '2026-06-02 12:20:00', NULL);
 
 INSERT INTO post_likes (
-    post_likes_id,
+    post_like_id,
     user_id,
     post_id,
     created_at
@@ -69,3 +69,9 @@ INSERT INTO post_likes (
       (3, 1, 2, '2026-06-02 11:40:00'),
       (4, 3, 2, '2026-06-02 11:45:00'),
       (5, 4, 3, '2026-06-02 12:25:00');
+
+ALTER TABLE users ALTER COLUMN user_id RESTART WITH 5;
+ALTER TABLE posts ALTER COLUMN post_id RESTART WITH 5;
+ALTER TABLE post_images ALTER COLUMN post_image_id RESTART WITH 5;
+ALTER TABLE comments ALTER COLUMN comment_id RESTART WITH 7;
+ALTER TABLE post_likes ALTER COLUMN post_like_id RESTART WITH 6;

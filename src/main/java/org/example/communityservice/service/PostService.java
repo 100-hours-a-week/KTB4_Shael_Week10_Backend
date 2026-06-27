@@ -5,25 +5,18 @@ import lombok.RequiredArgsConstructor;
 import org.example.communityservice.common.Exception.*;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
-import org.example.communityservice.dto.comment.CommentResponseDto;
-import org.example.communityservice.dto.post.PostRequestDto;
-import org.example.communityservice.dto.post.PostResponseDto;
-import org.example.communityservice.dto.post.PostUpdateRequestDto;
-import org.example.communityservice.dummyObject.Comment;
-import org.example.communityservice.dummyObject.Post;
-import org.example.communityservice.dummyObject.PostInfo;
-import org.example.communityservice.dummyObject.User;
-import org.example.communityservice.repository.CommentRepository;
-import org.example.communityservice.repository.PostInfoRepository;
-import org.example.communityservice.repository.PostRepository;
-import org.example.communityservice.repository.UserRepository;
+import org.example.communityservice.dto.comment.response.CommentResponseDto;
+import org.example.communityservice.dto.post.request.PostRequestDto;
+import org.example.communityservice.dto.post.request.PostUpdateRequestDto;
+import org.example.communityservice.dto.post.response.*;
+import org.example.communityservice.entity.*;
+import org.example.communityservice.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Validated
@@ -32,91 +25,145 @@ public class PostService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final PostInfoRepository postInfoRepository;
+    private final PostImageRepository postImageRepository;
     private final CommentRepository commentRepository;
+    private final PostLikeRepository postLikeRepository;
 
-    public List<PostResponseDto> showPostList(UUID userUuid){
-        userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
+    public List<PostListResponseDto> showPostList(Long userId){
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
 
-        List<PostResponseDto> postResponseDtoList = new ArrayList<>();
+        List<PostListResponseDto> postListResponseDto = new ArrayList<>();
+        List<Post> postList = postRepository.findAllByOrderByCreatedAtDesc();
+        for (Post post : postList) {
+            postListResponseDto.add(new PostListResponseDto(post));
+        }
+        return postListResponseDto;
+    }
 
-        List<Post> postList = postRepository.showAllPost();
-        List<PostInfo> postInfoList = postInfoRepository.showAllPostInfo();
+    @Transactional
+    public PostCreateResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto){
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
 
-        for(int i=0; i<postList.size(); i++){
-            for(int j=0; j<postInfoList.size(); j++){
-                if(postList.get(i).getPostUuid().equals(postInfoList.get(j).getPostUuid())){
-                    postResponseDtoList.add(new PostResponseDto(postList.get(i).getPostUuid(), postList.get(i).getPostTitle(), postInfoList.get(j).getLikeCount(),
-                            postInfoList.get(j).getCommentCount(), postInfoList.get(j).getViewCount(), postList.get(i).getPostDate(), postList.get(i).getWriterNickname()));
-                    break;
-                }
+        Post post = new Post(user, postRequestDto.getTitle(), postRequestDto.getContent(), 0, 0, 0);
+        postRepository.save(post);
+
+        int length = postRequestDto.getPostImage().size();
+        if(length<=5) {
+            for (int i = 0; i < length; i++) {
+                PostImage postImage = new PostImage(post, postRequestDto.getPostImage().get(i), i+1);
+                postImageRepository.save(postImage);
             }
         }
-        return postResponseDtoList;
-    }
-
-    public PostResponseDto createPost(UUID userUuid, @Valid PostRequestDto postRequestDto){
-        User user = userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
-
-        UUID postUuid = UUID.randomUUID();
-        String writerNickname = user.getNickname();
-        LocalDateTime postDate = LocalDateTime.now();
-        Post post = new Post(postUuid, userUuid, writerNickname, postRequestDto.getPostTitle(), postDate, postRequestDto.getPostContent(), postRequestDto.getPostImage());
-        postRepository.save(post);
-        PostInfo postInfo = new PostInfo(postUuid);
-        postInfoRepository.save(postInfo);
-        return new PostResponseDto(postUuid, userUuid);
-    }
-
-    public PostResponseDto showPostDetail(UUID userUuid, UUID postUuid){
-
-        userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
-        Post post = postRepository.findByUuid(postUuid).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
-        PostInfo postInfo = postInfoRepository.findByUuid(postUuid).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post_info", "not_exist")))));
-        postInfo.increaseViewCount();
-        List<Comment> commentList = commentRepository.findAllByPostUuid(postUuid);
-        List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
-        for(Comment comment : commentList){
-            User user = userRepository.findByUuid(comment.getCommentWriterUuid()).orElseThrow(() -> new UnauthorizedException("not_exist"));
-            String writerProfileImage = user.getProfileImage();
-            String writerNickname = user.getNickname();
-            commentResponseDtoList.add(new CommentResponseDto(comment, writerProfileImage, writerNickname));
+        else{
+            throw new BadRequestException("not_exist", "newMaximum allowed images is 5");
         }
 
-        return new PostResponseDto(post, postInfo.getLikeCount(), postInfo.getCommentCount(), postInfo.getViewCount(), commentResponseDtoList);
+        List<PostImage> postImageList = postImageRepository.findByPost_PostIdOrderByImageOrderAsc(post.getPostId());
+        List<PostImageResponseDto> postImageResponseDtoList = new ArrayList<>();
+        for (PostImage postImage : postImageList) {
+            postImageResponseDtoList.add(new PostImageResponseDto(postImage));
+        }
+        return new PostCreateResponseDto(post, postImageResponseDtoList);
     }
 
-    public PostResponseDto updatePost(UUID userUuid, UUID postUuid, @Valid PostUpdateRequestDto postUpdateRequestDto){
-        userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
-        Post existPost = postRepository.findByUuid(postUuid).orElseThrow(() -> new NotFoundException ("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto(null, "not_exist")))));
+    @Transactional
+    public PostDetailResponseDto showPostDetail(Long userId, Long postId){
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
+        post.increaseViewCount();
+        System.out.println("after increase = " + post.getViewCount());
 
-        if(!userUuid.equals(existPost.getWriterUuid())){
+        List<PostImage> postImageList = postImageRepository.findByPost_PostIdOrderByImageOrderAsc(postId);
+        if(postImageList.isEmpty()){
+            throw new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post_image", "not_exist"))));
+        }
+        List<PostImageResponseDto> postImageResponseDtoList = new ArrayList<>();
+        for (PostImage postImage : postImageList) {
+            postImageResponseDtoList.add(new PostImageResponseDto(postImage));
+        }
+
+        List<Comment> commentList = commentRepository.findByPost_PostIdOrderByCreatedAtDesc(postId);
+        if(commentList.isEmpty()){
+            return new PostDetailResponseDto(post, postImageResponseDtoList, null);
+        }
+
+        List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
+        for (Comment comment : commentList) {
+            commentResponseDtoList.add(new CommentResponseDto(comment, user));
+        }
+
+        return new PostDetailResponseDto(post, postImageResponseDtoList, commentResponseDtoList);
+    }
+
+    @Transactional
+    public PostUpdateResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto){
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException ("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
+        List<String> newPostImageList = postUpdateRequestDto.getPostImage();
+
+        if(!userId.equals(post.getUser().getUserId())){
             throw new ForbiddenException();
         }
-
-        if(postUpdateRequestDto.getPostTitle()==null && postUpdateRequestDto.getPostContent()==null && postUpdateRequestDto.getPostImage()==null){
+        if(postUpdateRequestDto.getTitle()==null && postUpdateRequestDto.getContent()==null && newPostImageList==null){
             throw new BadRequestException("invalid_request");
         }
 
-        if(postUpdateRequestDto.getPostTitle()!=null){
-            existPost.setPostTitle(postUpdateRequestDto.getPostTitle());
+        if(postUpdateRequestDto.getTitle()!=null){
+            post.changeTitle(postUpdateRequestDto.getTitle());
         }
-        if(postUpdateRequestDto.getPostContent()!=null){
-            existPost.setPostContent(postUpdateRequestDto.getPostContent());
+        if(postUpdateRequestDto.getContent()!=null){
+            post.changeContent(postUpdateRequestDto.getContent());
         }
-        if(postUpdateRequestDto.getPostImage()!=null){
-            existPost.setPostImage(postUpdateRequestDto.getPostImage());
+        if(newPostImageList!=null){
+            if(newPostImageList.size()<=5) {
+                List<PostImage> existPostImageList = postImageRepository.findByPost_PostId(postId);
+                postImageRepository.deleteAll(existPostImageList);
+
+                for (int i = 0; i < newPostImageList.size(); i++) {
+                    postImageRepository.save(new PostImage(post, newPostImageList.get(i), i));
+                }
+            }
+            else {
+                throw new BadRequestException("not_exist", "Maximum allowed images is 5");
+            }
         }
-        return new PostResponseDto(existPost.getPostTitle(), existPost.getPostContent(), existPost.getPostImage());
+        post.changeUpdatedAt();
+        List<PostImage> postImageList = postImageRepository.findByPost_PostIdOrderByImageOrderAsc(postId);
+        List<PostImageResponseDto> postImageResponseDtoList = new ArrayList<>();
+        for (PostImage postImage : postImageList) {
+            postImageResponseDtoList.add(new PostImageResponseDto(postImage));
+        }
+
+        return new PostUpdateResponseDto(post.getTitle(), postImageResponseDtoList, post.getContent(), post.getUpdatedAt());
     }
 
-    public void deletePost(UUID userUuid, UUID postUuid){
-        userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
-        Post existPost = postRepository.findByUuid(postUuid).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto(null, "not_exist")))));
+    public void deletePost(Long userId, Long postId){
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
-        if(!userUuid.equals(existPost.getWriterUuid())){
+        if(!userId.equals(post.getUser().getUserId())){
             throw new ForbiddenException();
         }
-        postRepository.delete(existPost);
+        postRepository.delete(post);
+    }
+
+    @Transactional
+    public PostLikeCountResponseDto toggleLike(Long userId, Long postId){
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
+
+        PostLike postLike = postLikeRepository.findByPost_PostIdAndUser_UserId(postId, userId);
+        if(post.getUser().getUserId().equals(userId)){
+            throw new ForbiddenException();
+        }
+        if(!(postLike == null)) {
+            postLikeRepository.delete(postLike);
+            post.decreaseLikeCount();
+        }
+        else{
+            postLikeRepository.save(new PostLike(user, post));
+            post.increaseLikeCount();
+        }
+        return new PostLikeCountResponseDto(post.getLikeCount());
     }
 }

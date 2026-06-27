@@ -6,15 +6,21 @@ import org.example.communityservice.common.Exception.BadRequestException;
 import org.example.communityservice.common.Exception.UnauthorizedException;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
-import org.example.communityservice.dto.user.*;
-import org.example.communityservice.dummyObject.User;
+import org.example.communityservice.dto.user.request.UserCreateRequestDto;
+import org.example.communityservice.dto.user.request.UserInfoUpdateRequestDto;
+import org.example.communityservice.dto.user.request.UserLoginRequestDto;
+import org.example.communityservice.dto.user.request.UserPasswordUpdateRequestDto;
+import org.example.communityservice.dto.user.response.UserInfoResponseDto;
+import org.example.communityservice.dto.user.response.UserLoginResponseDto;
+import org.example.communityservice.entity.User;
 import org.example.communityservice.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Validated
@@ -22,48 +28,47 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
 
-    public UserResponseDto login(@Valid UserLoginRequestDto userLoginRequestDto){
+    public UserLoginResponseDto login(@Valid UserLoginRequestDto userLoginRequestDto){
         User user = userRepository.findByEmail(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("not_exist"));
 
         if(!user.getPassword().equals(userLoginRequestDto.getPassword())){
             throw new UnauthorizedException("login_failed");
         }
-        return new UserResponseDto(user.getUserUuid());
+        return new UserLoginResponseDto(user.getUserId());
     }
 
     public void createUser(@Valid UserCreateRequestDto userCreateRequestDto){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
-        if(userRepository.duplicateEmail(userCreateRequestDto.getEmail())) {
+        if(userRepository.existsByEmail(userCreateRequestDto.getEmail())) {
             errorInfoDtoList.add(new ErrorInfoDto("email", "duplicate_email"));
         }
-        if(userRepository.duplicateNickname(userCreateRequestDto.getNickname())){
+        if(userRepository.existsByNickname(userCreateRequestDto.getNickname())){
             errorInfoDtoList.add(new ErrorInfoDto("nickname", "duplicate_nickname"));
         }
         if(!errorInfoDtoList.isEmpty()){
             throw new BadRequestException("invalid_request", new ErrorResponseDto(errorInfoDtoList));
         }
 
-        User user = new User(userCreateRequestDto);
-        user.setUserUuid(UUID.randomUUID());
-        userRepository.save(user);
+        userRepository.save(new User(userCreateRequestDto));
     }
 
-    public UserResponseDto showInfo(UUID userUuid){
-        return new UserResponseDto(userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist")));
+    public UserInfoResponseDto showInfo(Long userId){
+        return new UserInfoResponseDto(userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist")));
     }
 
-    public UserResponseDto updateInfo(UUID userUuid, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto){
+    @Transactional
+    public UserInfoResponseDto updateInfo(Long userId, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
-        User existUser = userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
         if(userInfoUpdateRequestDto.getEmail()==null && userInfoUpdateRequestDto.getNickname()==null && userInfoUpdateRequestDto.getProfileImage()==null) {
             throw new BadRequestException("invalid_request");
         }
-        if(userInfoUpdateRequestDto.getEmail()!=null && !existUser.getEmail().equals(userInfoUpdateRequestDto.getEmail()) && userRepository.duplicateEmail(userInfoUpdateRequestDto.getEmail())) {
+        if(userInfoUpdateRequestDto.getEmail()!=null && !user.getEmail().equals(userInfoUpdateRequestDto.getEmail()) && userRepository.existsByEmail(userInfoUpdateRequestDto.getEmail())) {
             errorInfoDtoList.add(new ErrorInfoDto("email", "duplicate_email"));
         }
-        if(userInfoUpdateRequestDto.getNickname()!=null && !existUser.getNickname().equals(userInfoUpdateRequestDto.getNickname()) && userRepository.duplicateNickname(userInfoUpdateRequestDto.getNickname())){
+        if(userInfoUpdateRequestDto.getNickname()!=null && !user.getNickname().equals(userInfoUpdateRequestDto.getNickname()) && userRepository.existsByNickname(userInfoUpdateRequestDto.getNickname())){
             errorInfoDtoList.add(new ErrorInfoDto("nickname", "duplicate_nickname"));
         }
         if(!errorInfoDtoList.isEmpty()){
@@ -71,24 +76,29 @@ public class UserService {
         }
 
         if(userInfoUpdateRequestDto.getEmail()!=null){
-            existUser.setEmail(userInfoUpdateRequestDto.getEmail());
+            user.changeEmail(userInfoUpdateRequestDto.getEmail());
         }
         if(userInfoUpdateRequestDto.getNickname()!=null){
-            existUser.setNickname(userInfoUpdateRequestDto.getNickname());
+            user.changeNickname(userInfoUpdateRequestDto.getNickname());
         }
         if(userInfoUpdateRequestDto.getProfileImage()!=null){
-            existUser.setProfileImage(userInfoUpdateRequestDto.getProfileImage());
+            user.changeProfileImage(userInfoUpdateRequestDto.getProfileImage());
         }
-        return new UserResponseDto(existUser);
+
+        user.changeUpdatedAt(LocalDateTime.now());
+        return new UserInfoResponseDto(user);
     }
 
-    public void updatePassword(UUID userUuid, @Valid UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
-        User user = userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
-        user.setPassword(userPasswordUpdateRequestDto.getPassword());
+    @Transactional
+    public void updatePassword(Long userId, @Valid UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+
+        user.changePassword(userPasswordUpdateRequestDto.getPassword());
+        user.changeUpdatedAt(LocalDateTime.now());
     }
 
-    public void withdrawal(UUID userUuid){
-        User user = userRepository.findByUuid(userUuid).orElseThrow(() -> new UnauthorizedException("not_exist"));
+    public void withdrawal(Long userId){
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
         userRepository.delete(user);
     }
 }

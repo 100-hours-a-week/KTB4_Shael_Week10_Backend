@@ -7,6 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class CommentRequestDto {
-    @NotBlank(message = "comment_content_required")
-    private String commentContent;
+    private Long parentCommentId;
+
+    @NotBlank(message = "content_required")
+    private String content;
 }

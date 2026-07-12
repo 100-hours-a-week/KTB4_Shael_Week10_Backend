@@ -41,9 +41,9 @@ public class CommentResponseDto {
         else {
             this.parentCommentId = null;
         }
-        this.writerId = user.getUserId();
-        this.writerProfileImage = user.getProfileImage();
-        this.writerNickname = user.getNickname();
+        this.writerId = comment.getUser().getUserId();
+        this.writerProfileImage = comment.getUser().getProfileImage();
+        this.writerNickname = comment.getUser().getNickname();
         this.isOwner = (comment.getUser().getUserId()).equals(user.getUserId());
         this.content = comment.getContent();
         this.createdAt = comment.getCreatedAt();

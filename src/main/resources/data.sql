@@ -7,10 +7,10 @@ INSERT INTO users (
     created_at,
     updated_at
 ) VALUES
-      (1, 'minji@example.com', 'minji1234', '민지', '/images/test_image.png', '2026-06-01 09:00:00', NULL),
-      (2, 'junho@example.com', 'junho1234', '준호', '/images/test_image.png', '2026-06-01 09:15:00', NULL),
-      (3, 'seoyeon@example.com', 'seoyeon1234', '서연', '/images/test_image.png', '2026-06-01 09:30:00', NULL),
-      (4, 'hyunwoo@example.com', 'hyunwoo1234', '현우', '/images/test_image.png', '2026-06-01 09:45:00', NULL);
+      (1, 'minji@example.com', 'Minji1234!', '민지', '/images/test_image.png', '2026-06-01 09:00:00', NULL),
+      (2, 'junho@example.com', 'Junho1234@', '준호', '/images/test_image.png', '2026-06-01 09:15:00', NULL),
+      (3, 'seoyeon@example.com', 'Seoyeon1234#', '서연', '/images/test_image.png', '2026-06-01 09:30:00', NULL),
+      (4, 'hyunwoo@example.com', 'Hyunwoo1234$', '현우', '/images/test_image.png', '2026-06-01 09:45:00', NULL);
 
 INSERT INTO posts (
     post_id,
@@ -72,6 +72,6 @@ INSERT INTO post_likes (
 
 ALTER TABLE users ALTER COLUMN user_id RESTART WITH 5;
 ALTER TABLE posts ALTER COLUMN post_id RESTART WITH 5;
-ALTER TABLE post_images ALTER COLUMN post_image_id RESTART WITH 5;
+ALTER TABLE post_images ALTER COLUMN post_image_id RESTART WITH 6;
 ALTER TABLE comments ALTER COLUMN comment_id RESTART WITH 7;
 ALTER TABLE post_likes ALTER COLUMN post_like_id RESTART WITH 6;

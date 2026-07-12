@@ -28,10 +28,10 @@ public class PostController {
     }
 
     @PostMapping
-    public ResponseEntity<CommonResponseDto<PostCreateResponseDto>> createPost(@PathVariable Long userId, @Valid @RequestBody PostRequestDto postRequestDto){
-        PostCreateResponseDto postCreateResponseDto = postService.createPost(userId, postRequestDto);
+    public ResponseEntity<CommonResponseDto<PostResponseDto>> createPost(@PathVariable Long userId, @Valid @RequestBody PostRequestDto postRequestDto){
+        PostResponseDto postResponseDto = postService.createPost(userId, postRequestDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", postCreateResponseDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", postResponseDto));
     }
 
     @GetMapping("/{postId}")
@@ -42,8 +42,8 @@ public class PostController {
     }
 
     @PatchMapping("/{postId}")
-    public ResponseEntity<CommonResponseDto<PostUpdateResponseDto>> updatePost(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody PostUpdateRequestDto postUpdateRequestDto){
-        PostUpdateResponseDto postUpdateResponseDto = postService.updatePost(userId, postId, postUpdateRequestDto);
+    public ResponseEntity<CommonResponseDto<PostResponseDto>> updatePost(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody PostUpdateRequestDto postUpdateRequestDto){
+        PostResponseDto postUpdateResponseDto = postService.updatePost(userId, postId, postUpdateRequestDto);
 
         return ResponseEntity.ok(new CommonResponseDto<>("update_success", postUpdateResponseDto));
     }

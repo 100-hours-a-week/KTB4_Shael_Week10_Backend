@@ -34,7 +34,7 @@ public class UserService {
         if(!user.getPassword().equals(userLoginRequestDto.getPassword())){
             throw new UnauthorizedException("login_failed");
         }
-        return new UserLoginResponseDto(user.getUserId());
+        return new UserLoginResponseDto(user.getUserId(), user.getEmail(), user.getNickname(), user.getProfileImage());
     }
 
     public void createUser(@Valid UserCreateRequestDto userCreateRequestDto){

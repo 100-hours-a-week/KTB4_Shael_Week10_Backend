@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
         "postId",
         "title",
         "writerNickname",
+        "writerProfileImage",
         "likeCount",
         "commentCount",
         "viewCount",
@@ -21,6 +22,7 @@ public class PostListResponseDto {
     private Long postId;
     private String title;
     private String writerNickname;
+    private String writerProfileImage;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
@@ -34,6 +36,7 @@ public class PostListResponseDto {
         this.postId = post.getPostId();
         this.title = post.getTitle();
         this.writerNickname = post.getUser().getNickname();
+        this.writerProfileImage = post.getUser().getProfileImage();
         this.likeCount = post.getLikeCount();
         this.commentCount = post.getCommentCount();
         this.viewCount = post.getViewCount();

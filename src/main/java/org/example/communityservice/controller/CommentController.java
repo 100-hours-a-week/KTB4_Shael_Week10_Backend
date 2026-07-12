@@ -3,8 +3,9 @@ package org.example.communityservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.communityservice.dto.comment.CommentRequestDto;
-import org.example.communityservice.dto.comment.response.CommentResponseDto;
+import org.example.communityservice.dto.comment.response.CommentCreateResponseDto;
 import org.example.communityservice.common.dto.CommonResponseDto;
+import org.example.communityservice.dto.comment.response.CommentDeleteResponseDto;
 import org.example.communityservice.dto.comment.response.CommentUpdateResponseDto;
 import org.example.communityservice.service.CommentService;
 import org.springframework.http.HttpStatus;
@@ -18,10 +19,10 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommonResponseDto<CommentResponseDto>> createComment(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody CommentRequestDto commentRequestDto){
-        CommentResponseDto commentResponseDto = commentService.createComment(userId, postId, commentRequestDto);
+    public ResponseEntity<CommonResponseDto<CommentCreateResponseDto>> createComment(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody CommentRequestDto commentRequestDto){
+        CommentCreateResponseDto commentCreateResponseDto = commentService.createComment(userId, postId, commentRequestDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", commentResponseDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", commentCreateResponseDto));
     }
 
     @PatchMapping("/{commentId}")
@@ -32,9 +33,9 @@ public class CommentController {
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<CommonResponseDto<Void>> deleteComment(@PathVariable Long userId, @PathVariable Long postId, @PathVariable Long commentId){
-        commentService.deleteComment(userId, postId, commentId);
+    public ResponseEntity<CommonResponseDto<CommentDeleteResponseDto>> deleteComment(@PathVariable Long userId, @PathVariable Long postId, @PathVariable Long commentId){
+        CommentDeleteResponseDto commentDeleteResponseDto = commentService.deleteComment(userId, postId, commentId);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("delete_success", null));
+        return ResponseEntity.ok(new CommonResponseDto<>("delete_success", commentDeleteResponseDto));
     }
 }

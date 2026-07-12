@@ -15,11 +15,13 @@ import java.util.List;
         "writerId",
         "writerNickname",
         "writerProfileImage",
-        "postImage",
+        "isOwner",
+        "postImages",
         "content",
         "createdAt",
         "updatedAt",
         "likeCount",
+        "isLiked",
         "commentCount",
         "viewCount",
         "commentList"
@@ -29,7 +31,8 @@ public class PostDetailResponseDto {
     private Long writerId;
     private String writerNickname;
     private String writerProfileImage;
-    private List<PostImageResponseDto> postImage;
+    private boolean isOwner;
+    private List<PostImageResponseDto> postImages;
     private String content;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -39,21 +42,24 @@ public class PostDetailResponseDto {
     private LocalDateTime updatedAt;
 
     private int likeCount;
+    private boolean isLiked;
     private int commentCount;
     private int viewCount;
     private List<CommentResponseDto> commentList;
 
 
-    public PostDetailResponseDto(Post post, List<PostImageResponseDto> postImageResponseDto, List<CommentResponseDto> commentList){
+    public PostDetailResponseDto(Post post, boolean isOwner,  List<PostImageResponseDto> postImageResponseDto, boolean isLiked, List<CommentResponseDto> commentList){
         this.title = post.getTitle();
         this.writerId = post.getUser().getUserId();
         this.writerNickname = post.getUser().getNickname();
         this.writerProfileImage = post.getUser().getProfileImage();
-        this.postImage = postImageResponseDto;
+        this.isOwner = isOwner;
+        this.postImages = postImageResponseDto;
         this.content = post.getContent();
         this.createdAt = post.getCreatedAt();
         this.updatedAt = post.getUpdatedAt();
         this.likeCount = post.getLikeCount();
+        this.isLiked = isLiked;
         this.commentCount = post.getCommentCount();
         this.viewCount = post.getViewCount();
         this.commentList = commentList;

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
         "createdAt",
         "commentCount"
 })
-public class CommentResponseDto {
+public class CommentCreateResponseDto {
     private Long commentId;
     private Long parentCommentId;
     private Long writerId;
@@ -32,8 +32,9 @@ public class CommentResponseDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
+    private int commentCount;
 
-    public CommentResponseDto(Comment comment, User user){
+    public CommentCreateResponseDto(Comment comment, User user, int commentCount){
         this.commentId = comment.getCommentId();
         if(comment.getParentComment()!=null){
             this.parentCommentId = comment.getParentComment().getCommentId();
@@ -47,5 +48,6 @@ public class CommentResponseDto {
         this.isOwner = (comment.getUser().getUserId()).equals(user.getUserId());
         this.content = comment.getContent();
         this.createdAt = comment.getCreatedAt();
+        this.commentCount = commentCount;
     }
 }

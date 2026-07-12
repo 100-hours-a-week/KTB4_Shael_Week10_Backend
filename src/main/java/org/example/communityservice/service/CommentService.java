@@ -6,7 +6,8 @@ import org.example.communityservice.common.Exception.*;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
 import org.example.communityservice.dto.comment.CommentRequestDto;
-import org.example.communityservice.dto.comment.response.CommentResponseDto;
+import org.example.communityservice.dto.comment.response.CommentCreateResponseDto;
+import org.example.communityservice.dto.comment.response.CommentDeleteResponseDto;
 import org.example.communityservice.dto.comment.response.CommentUpdateResponseDto;
 import org.example.communityservice.entity.Comment;
 import org.example.communityservice.entity.Post;
@@ -30,7 +31,7 @@ public class CommentService {
 
 
     @Transactional
-    public CommentResponseDto createComment(Long userId, Long postId, @Valid CommentRequestDto commentRequestDto) {
+    public CommentCreateResponseDto createComment(Long userId, Long postId, @Valid CommentRequestDto commentRequestDto) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
@@ -44,8 +45,9 @@ public class CommentService {
         Comment comment = new Comment(post, parentComment, user, commentRequestDto.getContent());
         commentRepository.save(comment);
         post.increaseCommentCount();
+        int commentCount = post.getCommentCount();
 
-        return new CommentResponseDto(comment, user);
+        return new CommentCreateResponseDto(comment, user, commentCount);
     }
 
     @Transactional
@@ -63,7 +65,7 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long userId, Long postId, Long commentId) {
+    public CommentDeleteResponseDto deleteComment(Long userId, Long postId, Long commentId) {
         userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist")))));
@@ -72,5 +74,8 @@ public class CommentService {
         }
         commentRepository.delete(comment);
         post.decreaseCommentCount();
+        int commentCount = post.getCommentCount();
+
+        return new CommentDeleteResponseDto(commentCount);
     }
 }

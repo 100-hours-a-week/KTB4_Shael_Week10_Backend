@@ -41,7 +41,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostCreateResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto){
+    public PostResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto){
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
 
         Post post = new Post(user, postRequestDto.getTitle(), postRequestDto.getContent(), 0, 0, 0);
@@ -57,13 +57,7 @@ public class PostService {
         else{
             throw new BadRequestException("not_exist", "newMaximum allowed images is 5");
         }
-
-        List<PostImage> postImageList = postImageRepository.findByPost_PostIdOrderByImageOrderAsc(post.getPostId());
-        List<PostImageResponseDto> postImageResponseDtoList = new ArrayList<>();
-        for (PostImage postImage : postImageList) {
-            postImageResponseDtoList.add(new PostImageResponseDto(postImage));
-        }
-        return new PostCreateResponseDto(post, postImageResponseDtoList);
+        return new PostResponseDto(post.getPostId());
     }
 
     @Transactional
@@ -82,9 +76,19 @@ public class PostService {
             postImageResponseDtoList.add(new PostImageResponseDto(postImage));
         }
 
+        boolean isOwner = false;
+        boolean isLiked = false;
+        if(userId.equals(post.getUser().getUserId())){
+            isOwner = true;
+        }
+        PostLike postLike = postLikeRepository.findByPost_PostIdAndUser_UserId(postId, userId);
+        if(postLike!=null){
+            isLiked = true;
+        }
+
         List<Comment> commentList = commentRepository.findByPost_PostIdOrderByCreatedAtDesc(postId);
         if(commentList.isEmpty()){
-            return new PostDetailResponseDto(post, postImageResponseDtoList, null);
+            return new PostDetailResponseDto(post, isOwner, postImageResponseDtoList, isLiked, null);
         }
 
         List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
@@ -92,11 +96,11 @@ public class PostService {
             commentResponseDtoList.add(new CommentResponseDto(comment, user));
         }
 
-        return new PostDetailResponseDto(post, postImageResponseDtoList, commentResponseDtoList);
+        return new PostDetailResponseDto(post, isOwner, postImageResponseDtoList, isLiked, commentResponseDtoList);
     }
 
     @Transactional
-    public PostUpdateResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto){
+    public PostResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto){
         userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException ("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         List<String> newPostImageList = postUpdateRequestDto.getPostImage();
@@ -120,7 +124,7 @@ public class PostService {
                 postImageRepository.deleteAll(existPostImageList);
 
                 for (int i = 0; i < newPostImageList.size(); i++) {
-                    postImageRepository.save(new PostImage(post, newPostImageList.get(i), i));
+                    postImageRepository.save(new PostImage(post, newPostImageList.get(i), i+1));
                 }
             }
             else {
@@ -128,13 +132,8 @@ public class PostService {
             }
         }
         post.changeUpdatedAt();
-        List<PostImage> postImageList = postImageRepository.findByPost_PostIdOrderByImageOrderAsc(postId);
-        List<PostImageResponseDto> postImageResponseDtoList = new ArrayList<>();
-        for (PostImage postImage : postImageList) {
-            postImageResponseDtoList.add(new PostImageResponseDto(postImage));
-        }
 
-        return new PostUpdateResponseDto(post.getTitle(), postImageResponseDtoList, post.getContent(), post.getUpdatedAt());
+        return new PostResponseDto(postId);
     }
 
     public void deletePost(Long userId, Long postId){
@@ -152,18 +151,21 @@ public class PostService {
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
+        boolean isLiked = true;
         PostLike postLike = postLikeRepository.findByPost_PostIdAndUser_UserId(postId, userId);
         if(post.getUser().getUserId().equals(userId)){
             throw new ForbiddenException();
         }
         if(!(postLike == null)) {
             postLikeRepository.delete(postLike);
+            isLiked = false;
             post.decreaseLikeCount();
         }
         else{
             postLikeRepository.save(new PostLike(user, post));
+            isLiked = true;
             post.increaseLikeCount();
         }
-        return new PostLikeCountResponseDto(post.getLikeCount());
+        return new PostLikeCountResponseDto(isLiked, post.getLikeCount());
     }
 }

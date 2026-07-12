@@ -55,7 +55,7 @@ public class PostService {
             }
         }
         else{
-            throw new BadRequestException("not_exist", "newMaximum allowed images is 5");
+            throw new BadRequestException("not_exist", "이미지는 최대 5장까지 업로드할 수 있습니다.");
         }
         return new PostResponseDto(post.getPostId());
     }
@@ -129,7 +129,7 @@ public class PostService {
                 }
             }
             else {
-                throw new BadRequestException("not_exist", "Maximum allowed images is 5");
+                throw new BadRequestException("not_exist", "이미지는 최대 5장까지 업로드할 수 있습니다.");
             }
         }
         post.changeUpdatedAt();

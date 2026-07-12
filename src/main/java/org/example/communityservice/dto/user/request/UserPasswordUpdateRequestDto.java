@@ -8,7 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class UserPasswordUpdateRequestDto {
-    @NotBlank(message = "password_required")
-    @Size(max = 255, message = "password_too_long")
+    @NotBlank(message = "비밀번호를 입력해주세요.")
+    @Size(max = 255, message = "비밀번호는 최대 255자까지 작성 가능합니다.")
     private String password;
 }

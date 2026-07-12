@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserInfoUpdateRequestDto {
-    @Email(message = "invalid_email")
-    @Size(max = 100, message = "email_too_long")
+    @Email(message = "올바른 이메일 주소 형식을 입력해주세요. (예: example@example.com)")
+    @Size(max = 100, message = "이메일은 최대 100자까지 작성 가능합니다.")
     private String email;
 
-    @Size(max = 10, message = "nickname_too_long")
+    @Size(max = 10, message = "닉네임은 최대 10자까지 작성 가능합니다.")
     private String nickname;
 
-    @Size(max = 500, message = "profile_image_too_long")
+    @Size(max = 500, message = "파일 이름은 최대 500자까지 가능합니다.")
     private String profileImage;
 }

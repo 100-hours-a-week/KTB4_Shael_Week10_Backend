@@ -41,10 +41,10 @@ public class UserService {
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
         if(userRepository.existsByEmail(userCreateRequestDto.getEmail())) {
-            errorInfoDtoList.add(new ErrorInfoDto("email", "duplicate_email"));
+            errorInfoDtoList.add(new ErrorInfoDto("email", "중복된 이메일입니다."));
         }
         if(userRepository.existsByNickname(userCreateRequestDto.getNickname())){
-            errorInfoDtoList.add(new ErrorInfoDto("nickname", "duplicate_nickname"));
+            errorInfoDtoList.add(new ErrorInfoDto("nickname", "중복된 닉네임입니다."));
         }
         if(!errorInfoDtoList.isEmpty()){
             throw new BadRequestException("invalid_request", new ErrorResponseDto(errorInfoDtoList));
@@ -66,10 +66,10 @@ public class UserService {
             throw new BadRequestException("invalid_request");
         }
         if(userInfoUpdateRequestDto.getEmail()!=null && !user.getEmail().equals(userInfoUpdateRequestDto.getEmail()) && userRepository.existsByEmail(userInfoUpdateRequestDto.getEmail())) {
-            errorInfoDtoList.add(new ErrorInfoDto("email", "duplicate_email"));
+            errorInfoDtoList.add(new ErrorInfoDto("email", "중복된 이메일입니다."));
         }
         if(userInfoUpdateRequestDto.getNickname()!=null && !user.getNickname().equals(userInfoUpdateRequestDto.getNickname()) && userRepository.existsByNickname(userInfoUpdateRequestDto.getNickname())){
-            errorInfoDtoList.add(new ErrorInfoDto("nickname", "duplicate_nickname"));
+            errorInfoDtoList.add(new ErrorInfoDto("nickname", "중복된 닉네임입니다."));
         }
         if(!errorInfoDtoList.isEmpty()){
             throw new BadRequestException("invalid_request", new ErrorResponseDto(errorInfoDtoList));

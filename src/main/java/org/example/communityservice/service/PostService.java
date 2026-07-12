@@ -122,6 +122,7 @@ public class PostService {
             if(newPostImageList.size()<=5) {
                 List<PostImage> existPostImageList = postImageRepository.findByPost_PostId(postId);
                 postImageRepository.deleteAll(existPostImageList);
+                postImageRepository.flush();
 
                 for (int i = 0; i < newPostImageList.size(); i++) {
                     postImageRepository.save(new PostImage(post, newPostImageList.get(i), i+1));

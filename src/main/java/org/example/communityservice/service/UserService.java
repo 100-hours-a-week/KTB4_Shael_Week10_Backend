@@ -29,7 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     public UserLoginResponseDto login(@Valid UserLoginRequestDto userLoginRequestDto){
-        User user = userRepository.findByEmail(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findByEmail(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("login_failed"));
 
         if(!user.getPassword().equals(userLoginRequestDto.getPassword())){
             throw new UnauthorizedException("login_failed");
@@ -54,14 +54,14 @@ public class UserService {
     }
 
     public UserInfoResponseDto showInfo(Long userId){
-        return new UserInfoResponseDto(userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist")));
+        return new UserInfoResponseDto(userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required")));
     }
 
     @Transactional
     public UserInfoResponseDto updateInfo(Long userId, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         if(userInfoUpdateRequestDto.getEmail()==null && userInfoUpdateRequestDto.getNickname()==null && userInfoUpdateRequestDto.getProfileImage()==null) {
             throw new BadRequestException("invalid_request");
         }
@@ -91,14 +91,14 @@ public class UserService {
 
     @Transactional
     public void updatePassword(Long userId, @Valid UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
         user.changePassword(userPasswordUpdateRequestDto.getPassword());
         user.changeUpdatedAt(LocalDateTime.now());
     }
 
     public void withdrawal(Long userId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         userRepository.delete(user);
     }
 }

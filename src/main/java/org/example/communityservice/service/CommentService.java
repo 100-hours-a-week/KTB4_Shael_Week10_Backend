@@ -32,7 +32,7 @@ public class CommentService {
 
     @Transactional
     public CommentCreateResponseDto createComment(Long userId, Long postId, @Valid CommentRequestDto commentRequestDto) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
         Comment parentComment;
@@ -52,7 +52,7 @@ public class CommentService {
 
     @Transactional
     public CommentUpdateResponseDto updateComment(Long userId, Long postId, Long commentId, @Valid CommentRequestDto commentRequestDto) {
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist")))));
         if(!userId.equals(comment.getUser().getUserId())){
@@ -66,7 +66,7 @@ public class CommentService {
 
     @Transactional
     public CommentDeleteResponseDto deleteComment(Long userId, Long postId, Long commentId) {
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist")))));
         if(!userId.equals(comment.getUser().getUserId())){

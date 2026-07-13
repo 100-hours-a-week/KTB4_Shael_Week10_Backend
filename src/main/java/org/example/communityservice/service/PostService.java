@@ -30,7 +30,7 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
 
     public List<PostListResponseDto> showPostList(Long userId){
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
         List<PostListResponseDto> postListResponseDto = new ArrayList<>();
         List<Post> postList = postRepository.findAllByOrderByCreatedAtDesc();
@@ -42,7 +42,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
         Post post = new Post(user, postRequestDto.getTitle(), postRequestDto.getContent(), 0, 0, 0);
         postRepository.save(post);
@@ -62,7 +62,7 @@ public class PostService {
 
     @Transactional
     public PostDetailResponseDto showPostDetail(Long userId, Long postId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         post.increaseViewCount();
         System.out.println("after increase = " + post.getViewCount());
@@ -101,7 +101,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto){
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException ("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         List<String> newPostImageList = postUpdateRequestDto.getPostImage();
 
@@ -138,7 +138,7 @@ public class PostService {
     }
 
     public void deletePost(Long userId, Long postId){
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
         if(!userId.equals(post.getUser().getUserId())){
@@ -149,10 +149,10 @@ public class PostService {
 
     @Transactional
     public PostLikeCountResponseDto toggleLike(Long userId, Long postId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("not_exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
-        boolean isLiked = true;
+        boolean isLiked;
         PostLike postLike = postLikeRepository.findByPost_PostIdAndUser_UserId(postId, userId);
         if(post.getUser().getUserId().equals(userId)){
             throw new ForbiddenException();

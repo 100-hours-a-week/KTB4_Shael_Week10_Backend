@@ -11,6 +11,9 @@ import org.example.communityservice.dto.post.request.PostUpdateRequestDto;
 import org.example.communityservice.dto.post.response.*;
 import org.example.communityservice.entity.*;
 import org.example.communityservice.repository.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -29,15 +32,36 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
 
-    public List<PostListResponseDto> showPostList(Long userId){
+    @Transactional(readOnly = true)
+    public PostListCursorResponseDto showPostList(Long userId, Long cursor){
         userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
-        List<PostListResponseDto> postListResponseDto = new ArrayList<>();
-        List<Post> postList = postRepository.findAllByOrderByCreatedAtDesc();
-        for (Post post : postList) {
-            postListResponseDto.add(new PostListResponseDto(post));
+        Pageable pageable = PageRequest.of(0, 10);
+        Slice<Post> postSlice;
+
+        if(cursor == null){
+            postSlice = postRepository.findAllByOrderByPostIdDesc(pageable);
         }
-        return postListResponseDto;
+        else{
+            postSlice = postRepository.findByPostIdLessThanOrderByPostIdDesc(cursor, pageable);
+        }
+
+        List<PostListResponseDto> posts = new ArrayList<>();
+
+        for(Post post : postSlice.getContent()){
+            PostListResponseDto postListResponseDto = new PostListResponseDto(post);
+            posts.add(postListResponseDto);
+        }
+
+        Long nextCursor;
+        if(!(posts.isEmpty())){
+            nextCursor = posts.getLast().getPostId();
+        }
+        else {
+            nextCursor = null;
+        }
+
+        return new PostListCursorResponseDto(posts, nextCursor, postSlice.hasNext());
     }
 
     @Transactional

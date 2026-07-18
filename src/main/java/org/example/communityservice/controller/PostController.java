@@ -11,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/{userId}/posts")
@@ -22,10 +20,10 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping
-    public ResponseEntity<CommonResponseDto<List<PostListResponseDto>>> showPostList(@PathVariable Long userId){
-        List<PostListResponseDto> postListResponseDto = postService.showPostList(userId);
+    public ResponseEntity<CommonResponseDto<PostListCursorResponseDto>> showPostList(@PathVariable Long userId, @RequestParam(required = false) Long cursor){
+        PostListCursorResponseDto postListCursorResponseDto = postService.showPostList(userId, cursor);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", postListResponseDto));
+        return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", postListCursorResponseDto));
     }
 
     @PostMapping

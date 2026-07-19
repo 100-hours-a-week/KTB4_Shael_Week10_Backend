@@ -79,7 +79,7 @@ public class PostService {
             }
         }
         else{
-            throw new BadRequestException("not_exist", "이미지는 최대 5장까지 업로드할 수 있습니다.");
+            throw new BadRequestException("invalid_request", "이미지는 최대 5장까지 업로드할 수 있습니다.");
         }
         return new PostResponseDto(post.getPostId());
     }
@@ -153,7 +153,7 @@ public class PostService {
                 }
             }
             else {
-                throw new BadRequestException("not_exist", "이미지는 최대 5장까지 업로드할 수 있습니다.");
+                throw new BadRequestException("invalid_request", "이미지는 최대 5장까지 업로드할 수 있습니다.");
             }
         }
         post.changeUpdatedAt();

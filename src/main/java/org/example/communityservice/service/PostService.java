@@ -11,12 +11,14 @@ import org.example.communityservice.dto.post.request.PostUpdateRequestDto;
 import org.example.communityservice.dto.post.response.*;
 import org.example.communityservice.entity.*;
 import org.example.communityservice.repository.*;
+import org.example.communityservice.storage.PostImageStorage;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,7 @@ public class PostService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostImageStorage postImageStorage;
     private final PostImageRepository postImageRepository;
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
@@ -65,23 +68,37 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto){
+    public PostResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto, List<MultipartFile> images){
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        validateImages(images);
 
         Post post = new Post(user, postRequestDto.getTitle(), postRequestDto.getContent(), 0, 0, 0);
         postRepository.save(post);
 
-        int length = postRequestDto.getPostImage().size();
-        if(length<=5) {
-            for (int i = 0; i < length; i++) {
-                PostImage postImage = new PostImage(post, postRequestDto.getPostImage().get(i), i+1);
-                postImageRepository.save(postImage);
-            }
+        List<PostImage> postImageList = new ArrayList<>();
+
+        for(int i = 0; i < images.size(); i++){
+            MultipartFile image = images.get(i);
+
+            String storedFilename = postImageStorage.store(image);
+            PostImage postImage = new PostImage(post, image.getOriginalFilename(), storedFilename, i+1);
+
+            postImageList.add(postImage);
         }
-        else{
+        postImageRepository.saveAll(postImageList);
+        return new PostResponseDto(post.getPostId());
+    }
+
+    private void validateImages(List<MultipartFile> images){
+        if(images == null || images.isEmpty()){
+            throw new BadRequestException("invalid_request", "이미지를 업로드해주세요.");
+        }
+        if(images.size() > 5){
             throw new BadRequestException("invalid_request", "이미지는 최대 5장까지 업로드할 수 있습니다.");
         }
-        return new PostResponseDto(post.getPostId());
+        if(images.stream().anyMatch(image -> image.isEmpty())){
+            throw new BadRequestException("invalid_request", "빈 이미지 파일은 업로드할 수 없습니다.");
+        }
     }
 
     @Transactional
@@ -89,7 +106,6 @@ public class PostService {
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         post.increaseViewCount();
-        System.out.println("after increase = " + post.getViewCount());
 
         List<PostImage> postImageList = postImageRepository.findByPost_PostIdOrderByImageOrderAsc(postId);
         if(postImageList.isEmpty()){
@@ -124,15 +140,14 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto){
+    public PostResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto, List<MultipartFile> images){
         userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException ("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
-        List<String> newPostImageList = postUpdateRequestDto.getPostImage();
 
         if(!userId.equals(post.getUser().getUserId())){
             throw new ForbiddenException();
         }
-        if(postUpdateRequestDto.getTitle()==null && postUpdateRequestDto.getContent()==null && newPostImageList==null){
+        if(postUpdateRequestDto.getTitle()==null && postUpdateRequestDto.getContent()==null && images==null){
             throw new BadRequestException("invalid_request");
         }
 
@@ -142,25 +157,48 @@ public class PostService {
         if(postUpdateRequestDto.getContent()!=null){
             post.changeContent(postUpdateRequestDto.getContent());
         }
-        if(newPostImageList!=null){
-            if(newPostImageList.size()<=5) {
-                List<PostImage> existPostImageList = postImageRepository.findByPost_PostId(postId);
-                postImageRepository.deleteAll(existPostImageList);
-                postImageRepository.flush();
-
-                for (int i = 0; i < newPostImageList.size(); i++) {
-                    postImageRepository.save(new PostImage(post, newPostImageList.get(i), i+1));
-                }
-            }
-            else {
-                throw new BadRequestException("invalid_request", "이미지는 최대 5장까지 업로드할 수 있습니다.");
-            }
+        if(images!=null){
+            replacePostImages(post, images);
         }
         post.changeUpdatedAt();
 
         return new PostResponseDto(postId);
     }
 
+    private void replacePostImages(Post post, List<MultipartFile> images){
+        validateImages(images);
+
+        List<PostImage> existingImages = postImageRepository.findByPost_PostId(post.getPostId());
+        List<String> newStoredFilenames = new ArrayList<>();
+        List<PostImage> newPostImages = new ArrayList<>();
+
+        try{
+            for(int i=0; i< images.size(); i++){
+                MultipartFile image = images.get(i);
+
+                String storedFilename = postImageStorage.store(image);
+                newStoredFilenames.add(storedFilename);
+
+                newPostImages.add(new PostImage(post, image.getOriginalFilename(), storedFilename, i+1));
+            }
+            postImageRepository.deleteAll(existingImages);
+            postImageRepository.flush();
+
+            postImageRepository.saveAll(newPostImages);
+        }
+        catch (RuntimeException e){
+            for(String storedFilename : newStoredFilenames){
+                postImageStorage.delete((storedFilename));
+            }
+            throw new FileStorageException();
+        }
+
+        for(PostImage existingImage : existingImages){
+            postImageStorage.delete(existingImage.getStoredFilename());
+        }
+    }
+
+    @Transactional
     public void deletePost(Long userId, Long postId){
         userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
@@ -168,7 +206,15 @@ public class PostService {
         if(!userId.equals(post.getUser().getUserId())){
             throw new ForbiddenException();
         }
+
+        List<String> storedFilenames = postImageRepository.findStoredFilenamesByPostId(postId);
+
         postRepository.delete(post);
+        postRepository.flush();
+
+        for(String storedFilename : storedFilenames){
+           postImageStorage.delete(storedFilename);
+        }
     }
 
     @Transactional

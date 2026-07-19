@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "post_images", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_post_images_post_order", columnNames = {"post_id", "image_order"})}
+        @UniqueConstraint(name = "uk_post_images_post_order", columnNames = {"post_id", "image_order"}),
+@UniqueConstraint(name = "uk_post_images_stored_filename", columnNames = "stored_filename")}
 )
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,8 +20,11 @@ public class PostImage {
     @Column(name = "post_image_id")
     private Long postImageId;
 
-    @Column(name = "post_image", nullable = false, length = 500)
-    private String postImage;
+    @Column(name = "original_filename", nullable = false, length = 500)
+    private String originalFilename;
+
+    @Column(name = "stored_filename", nullable = false, length = 100)
+    private String storedFilename;
 
     @Column(name = "image_order", nullable = false)
     @Min(1)
@@ -32,9 +36,10 @@ public class PostImage {
     private Post post;
 
 
-    public PostImage(Post post, String postImage, int imageOrder){
+    public PostImage(Post post, String originalFilename, String storedFilename, int imageOrder){
         this.post = post;
-        this.postImage = postImage;
+        this.originalFilename = originalFilename;
+        this.storedFilename = storedFilename;
         this.imageOrder = imageOrder;
     }
 }

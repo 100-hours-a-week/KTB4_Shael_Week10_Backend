@@ -3,14 +3,14 @@ INSERT INTO users (
     email,
     password,
     nickname,
-    profile_image,
+    profile_stored_filename,
     created_at,
     updated_at
 ) VALUES
-      (1, 'minji@example.com', 'Minji1234!', '민지', '/images/test_image.png', '2026-06-01 09:00:00', NULL),
-      (2, 'junho@example.com', 'Junho1234@', '준호', '/images/test_image.png', '2026-06-01 09:15:00', NULL),
-      (3, 'seoyeon@example.com', 'Seoyeon1234#', '서연', '/images/test_image.png', '2026-06-01 09:30:00', NULL),
-      (4, 'hyunwoo@example.com', 'Hyunwoo1234$', '현우', '/images/test_image.png', '2026-06-01 09:45:00', NULL);
+      (1, 'minji@example.com', 'Minji1234!', '민지', 'test_image.png', '2026-06-01 09:00:00', NULL),
+      (2, 'junho@example.com', 'Junho1234@', '준호', 'test_image.png', '2026-06-01 09:15:00', NULL),
+      (3, 'seoyeon@example.com', 'Seoyeon1234#', '서연', 'test_image.png', '2026-06-01 09:30:00', NULL),
+      (4, 'hyunwoo@example.com', 'Hyunwoo1234$', '현우', 'test_image.png', '2026-06-01 09:45:00', NULL);
 
 INSERT INTO posts (
     post_id,
@@ -31,14 +31,15 @@ INSERT INTO posts (
 INSERT INTO post_images (
     post_image_id,
     post_id,
-    post_image,
+    original_filename,
+    stored_filename,
     image_order
 ) VALUES
-      (1, 1, '/images/test_image.png', 1),
-      (2, 1, '/images/test_image.png', 2),
-      (3, 2, '/images/test_image.png', 1),
-      (4, 3, '/images/test_image.png', 1),
-      (5, 4, '/images/test_image.png', 1);
+      (1, 1, 'test_image.png','test-image-1.png', 1),
+      (2, 1, 'test_image.png','test-image-2.png',  2),
+      (3, 2, 'test_image.png','test-image-3.png',  1),
+      (4, 3, 'test_image.png','test-image-4.png',  1),
+      (5, 4, 'test_image.png','test-image-5.png',  1);
 
 INSERT INTO comments (
     comment_id,

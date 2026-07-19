@@ -8,8 +8,12 @@ import org.example.communityservice.dto.post.request.PostUpdateRequestDto;
 import org.example.communityservice.dto.post.response.*;
 import org.example.communityservice.service.PostService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,9 +30,9 @@ public class PostController {
         return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", postListCursorResponseDto));
     }
 
-    @PostMapping
-    public ResponseEntity<CommonResponseDto<PostResponseDto>> createPost(@PathVariable Long userId, @Valid @RequestBody PostRequestDto postRequestDto){
-        PostResponseDto postResponseDto = postService.createPost(userId, postRequestDto);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponseDto<PostResponseDto>> createPost(@PathVariable Long userId, @Valid @RequestPart("content") PostRequestDto postRequestDto, @RequestPart("images") List<MultipartFile> images){
+        PostResponseDto postResponseDto = postService.createPost(userId, postRequestDto, images);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", postResponseDto));
     }
@@ -40,11 +44,12 @@ public class PostController {
         return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", postDetailResponseDto));
     }
 
-    @PatchMapping("/{postId}")
-    public ResponseEntity<CommonResponseDto<PostResponseDto>> updatePost(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody PostUpdateRequestDto postUpdateRequestDto){
-        PostResponseDto postUpdateResponseDto = postService.updatePost(userId, postId, postUpdateRequestDto);
+    @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponseDto<PostResponseDto>> updatePost(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestPart("content") PostUpdateRequestDto postUpdateRequestDto, @RequestPart(value = "images", required = false)
+                                                                         List<MultipartFile> images){
+        PostResponseDto postResponseDto = postService.updatePost(userId, postId, postUpdateRequestDto, images);
 
-        return ResponseEntity.ok(new CommonResponseDto<>("update_success", postUpdateResponseDto));
+        return ResponseEntity.ok(new CommonResponseDto<>("update_success", postResponseDto));
     }
 
     @DeleteMapping("/{postId}")

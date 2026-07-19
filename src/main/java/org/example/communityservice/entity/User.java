@@ -26,8 +26,8 @@ public class User {
     @Column(nullable = false, unique = true, length = 10)
     private String nickname;
 
-    @Column(name = "profile_image", nullable = false, length = 500)
-    private String profileImage;
+    @Column(name = "profile_stored_filename", nullable = false, length = 500)
+    private String profileStoredFilename;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -35,16 +35,16 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public User(UserCreateRequestDto userCreateRequestDto){
+    public User(UserCreateRequestDto userCreateRequestDto, String profileStoredFilename){
         this.email = userCreateRequestDto.getEmail();
         this.password = userCreateRequestDto.getPassword();
         this.nickname = userCreateRequestDto.getNickname();
 
-        if(userCreateRequestDto.getProfileImage()==null){
-            this.profileImage = "/images/test_image.png";
+        if(profileStoredFilename==null){
+            this.profileStoredFilename = "test_image.png";
         }
         else {
-            this.profileImage = userCreateRequestDto.getProfileImage();
+            this.profileStoredFilename = profileStoredFilename;
         }
         this.createdAt = LocalDateTime.now();
     }
@@ -61,8 +61,8 @@ public class User {
         this.nickname = nickname;
     }
 
-    public void changeProfileImage(String profileImage){
-        this.profileImage = profileImage;
+    public void changeProfileStoredFilename(String profileStoredFilename){
+        this.profileStoredFilename = profileStoredFilename;
     }
 
     public void changeUpdatedAt(LocalDateTime updatedAt){

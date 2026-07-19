@@ -3,6 +3,7 @@ package org.example.communityservice.service;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.communityservice.common.Exception.BadRequestException;
+import org.example.communityservice.common.Exception.FileStorageException;
 import org.example.communityservice.common.Exception.UnauthorizedException;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
@@ -14,9 +15,11 @@ import org.example.communityservice.dto.user.response.UserInfoResponseDto;
 import org.example.communityservice.dto.user.response.UserLoginResponseDto;
 import org.example.communityservice.entity.User;
 import org.example.communityservice.repository.UserRepository;
+import org.example.communityservice.storage.ProfileImageStorage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,6 +30,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final ProfileImageStorage profileImageStorage;
+    private static final String DEFAULT_PROFILE_IMAGE = "test_image.png";
 
     public UserLoginResponseDto login(@Valid UserLoginRequestDto userLoginRequestDto){
         User user = userRepository.findByEmail(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("login_failed"));
@@ -34,10 +39,13 @@ public class UserService {
         if(!user.getPassword().equals(userLoginRequestDto.getPassword())){
             throw new UnauthorizedException("login_failed");
         }
-        return new UserLoginResponseDto(user.getUserId(), user.getEmail(), user.getNickname(), user.getProfileImage());
+
+        String profileImage = "/images/profiles/" + user.getProfileStoredFilename();
+        return new UserLoginResponseDto(user.getUserId(), user.getEmail(), user.getNickname(), profileImage);
     }
 
-    public void createUser(@Valid UserCreateRequestDto userCreateRequestDto){
+    @Transactional
+    public void createUser(@Valid UserCreateRequestDto userCreateRequestDto, MultipartFile profileImage){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
         if(userRepository.existsByEmail(userCreateRequestDto.getEmail())) {
@@ -50,7 +58,26 @@ public class UserService {
             throw new BadRequestException("invalid_request", new ErrorResponseDto(errorInfoDtoList));
         }
 
-        userRepository.save(new User(userCreateRequestDto));
+        String profileStoredFilename = null;
+
+        if(profileImage != null && !profileImage.isEmpty()){
+            profileStoredFilename = profileImageStorage.store(profileImage);
+        }
+
+        try{
+            userRepository.save(new User(userCreateRequestDto, profileStoredFilename));
+            userRepository.flush();
+        }
+        catch (RuntimeException e){
+            if(profileStoredFilename != null){
+                try{
+                    profileImageStorage.delete(profileStoredFilename);
+                }
+                catch (FileStorageException ignored){
+                }
+            }
+            throw e;
+        }
     }
 
     public UserInfoResponseDto showInfo(Long userId){
@@ -58,11 +85,11 @@ public class UserService {
     }
 
     @Transactional
-    public UserInfoResponseDto updateInfo(Long userId, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto){
+    public UserInfoResponseDto updateInfo(Long userId, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto, MultipartFile profileImage){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
-        if(userInfoUpdateRequestDto.getEmail()==null && userInfoUpdateRequestDto.getNickname()==null && userInfoUpdateRequestDto.getProfileImage()==null) {
+        if(userInfoUpdateRequestDto.getEmail()==null && userInfoUpdateRequestDto.getNickname()==null && profileImage==null) {
             throw new BadRequestException("invalid_request");
         }
         if(userInfoUpdateRequestDto.getEmail()!=null && !user.getEmail().equals(userInfoUpdateRequestDto.getEmail()) && userRepository.existsByEmail(userInfoUpdateRequestDto.getEmail())) {
@@ -75,17 +102,37 @@ public class UserService {
             throw new BadRequestException("invalid_request", new ErrorResponseDto(errorInfoDtoList));
         }
 
-        if(userInfoUpdateRequestDto.getEmail()!=null){
-            user.changeEmail(userInfoUpdateRequestDto.getEmail());
-        }
-        if(userInfoUpdateRequestDto.getNickname()!=null){
-            user.changeNickname(userInfoUpdateRequestDto.getNickname());
-        }
-        if(userInfoUpdateRequestDto.getProfileImage()!=null){
-            user.changeProfileImage(userInfoUpdateRequestDto.getProfileImage());
-        }
+        String oldProfileStoredFilename = user.getProfileStoredFilename();
+        String newProfileStoredFilename = null;
 
-        user.changeUpdatedAt(LocalDateTime.now());
+        try {
+            if (userInfoUpdateRequestDto.getEmail() != null) {
+                user.changeEmail(userInfoUpdateRequestDto.getEmail());
+            }
+            if (userInfoUpdateRequestDto.getNickname() != null) {
+                user.changeNickname(userInfoUpdateRequestDto.getNickname());
+            }
+            if (profileImage != null && !profileImage.isEmpty()) {
+                newProfileStoredFilename = profileImageStorage.store(profileImage);
+                user.changeProfileStoredFilename(newProfileStoredFilename);
+            }
+
+            user.changeUpdatedAt(LocalDateTime.now());
+            userRepository.flush();
+        }
+        catch (RuntimeException e){
+            if(newProfileStoredFilename != null){
+                try{
+                    profileImageStorage.delete(newProfileStoredFilename);
+                }
+                catch (FileStorageException ignored){
+                }
+            }
+            throw e;
+        }
+        if(profileImage != null && !profileImage.isEmpty() && !DEFAULT_PROFILE_IMAGE.equals(oldProfileStoredFilename)){
+            profileImageStorage.delete(oldProfileStoredFilename);
+        }
         return new UserInfoResponseDto(user);
     }
 
@@ -97,8 +144,17 @@ public class UserService {
         user.changeUpdatedAt(LocalDateTime.now());
     }
 
+    @Transactional
     public void withdrawal(Long userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+
+        String profileStoredFilename = user.getProfileStoredFilename();
+
         userRepository.delete(user);
+        userRepository.flush();
+
+        if(!DEFAULT_PROFILE_IMAGE.equals(profileStoredFilename)){
+            profileImageStorage.delete(profileStoredFilename);
+        }
     }
 }

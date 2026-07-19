@@ -24,7 +24,4 @@ public class UserCreateRequestDto {
     @NotBlank(message = "닉네임을 입력해주세요.")
     @Size(max = 10, message = "닉네임은 최대 10자까지 작성 가능합니다.")
     private String nickname;
-
-    @Size(max = 500, message = "파일 이름은 최대 500자까지 가능합니다.")
-    private String profileImage;
 }

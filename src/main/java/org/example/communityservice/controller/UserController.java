@@ -11,8 +11,10 @@ import org.example.communityservice.dto.user.response.UserInfoResponseDto;
 import org.example.communityservice.dto.user.response.UserLoginResponseDto;
 import org.example.communityservice.service.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,9 +30,9 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponseDto<>("login_success", userLoginResponseDto));
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<CommonResponseDto<Void>> createUser(@Valid @RequestBody UserCreateRequestDto UserCreateRequestDto){
-        userService.createUser(UserCreateRequestDto);
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponseDto<Void>> createUser(@Valid @RequestPart("content") UserCreateRequestDto userCreateRequestDto, @RequestPart(value = "profileImage", required = false)MultipartFile profileImage){
+        userService.createUser(userCreateRequestDto, profileImage);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", null));
     }
@@ -42,9 +44,9 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponseDto<>("fetch_success", userInfoResponseDto));
     }
 
-    @PatchMapping("/user/{userId}/info")
-    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> updateInfo(@PathVariable Long userId, @Valid @RequestBody UserInfoUpdateRequestDto userInfoUpdateRequestDto){
-        UserInfoResponseDto userInfoResponseDto = userService.updateInfo(userId, userInfoUpdateRequestDto);
+    @PatchMapping(value = "/user/{userId}/info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> updateInfo(@PathVariable Long userId, @Valid @RequestPart(value = "content", required = false) UserInfoUpdateRequestDto userInfoUpdateRequestDto, @RequestPart(value = "profileImage", required = false) MultipartFile profileImage){
+        UserInfoResponseDto userInfoResponseDto = userService.updateInfo(userId, userInfoUpdateRequestDto, profileImage);
 
         return ResponseEntity.ok(new CommonResponseDto<>("update_success", userInfoResponseDto));
     }

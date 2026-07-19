@@ -43,7 +43,7 @@ public class CommentCreateResponseDto {
             this.parentCommentId = null;
         }
         this.writerId = user.getUserId();
-        this.writerProfileImage = user.getProfileImage();
+        this.writerProfileImage = "/images/profiles/" + user.getProfileStoredFilename();
         this.writerNickname = user.getNickname();
         this.isOwner = (comment.getUser().getUserId()).equals(user.getUserId());
         this.content = comment.getContent();

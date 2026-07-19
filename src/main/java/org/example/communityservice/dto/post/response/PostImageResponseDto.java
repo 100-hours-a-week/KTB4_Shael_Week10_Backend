@@ -7,18 +7,21 @@ import org.example.communityservice.entity.PostImage;
 @Getter
 @JsonPropertyOrder({
         "postImageId",
-        "postImage",
+        "originalFilename",
+        "imageUrl",
         "imageOrder"
 })
 public class PostImageResponseDto {
     private Long postImageId;
-    private String postImage;
+    private String originalFilename;
+    private String imageUrl;
     private int imageOrder;
 
 
     public PostImageResponseDto(PostImage postImage){
         this.postImageId = postImage.getPostImageId();
-        this.postImage = postImage.getPostImage();
+        this.originalFilename = postImage.getOriginalFilename();
+        this.imageUrl = "/images/posts/" + postImage.getStoredFilename();
         this.imageOrder = postImage.getImageOrder();
     }
 }

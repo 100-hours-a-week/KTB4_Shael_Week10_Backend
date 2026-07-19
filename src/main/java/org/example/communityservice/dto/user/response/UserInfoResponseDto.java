@@ -18,6 +18,6 @@ public class UserInfoResponseDto {
     public UserInfoResponseDto(User user){
         this.email = user.getEmail();
         this.nickname = user.getNickname();
-        this.profileImage = user.getProfileImage();
+        this.profileImage = "/images/profiles/" + user.getProfileStoredFilename();
     }
 }

@@ -36,7 +36,7 @@ public class PostListResponseDto {
         this.postId = post.getPostId();
         this.title = post.getTitle();
         this.writerNickname = post.getUser().getNickname();
-        this.writerProfileImage = post.getUser().getProfileImage();
+        this.writerProfileImage = "/images/profiles/" + post.getUser().getProfileStoredFilename();
         this.likeCount = post.getLikeCount();
         this.commentCount = post.getCommentCount();
         this.viewCount = post.getViewCount();

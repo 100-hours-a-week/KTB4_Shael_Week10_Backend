@@ -52,7 +52,7 @@ public class PostDetailResponseDto {
         this.title = post.getTitle();
         this.writerId = post.getUser().getUserId();
         this.writerNickname = post.getUser().getNickname();
-        this.writerProfileImage = post.getUser().getProfileImage();
+        this.writerProfileImage = "/images/profiles/" + post.getUser().getProfileStoredFilename();
         this.isOwner = isOwner;
         this.postImages = postImageResponseDto;
         this.content = post.getContent();

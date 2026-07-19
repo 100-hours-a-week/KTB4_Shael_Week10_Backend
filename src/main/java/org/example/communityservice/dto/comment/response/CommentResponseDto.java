@@ -42,7 +42,7 @@ public class CommentResponseDto {
             this.parentCommentId = null;
         }
         this.writerId = comment.getUser().getUserId();
-        this.writerProfileImage = comment.getUser().getProfileImage();
+        this.writerProfileImage = "/images/profiles/" + comment.getUser().getProfileStoredFilename();
         this.writerNickname = comment.getUser().getNickname();
         this.isOwner = (comment.getUser().getUserId()).equals(user.getUserId());
         this.content = comment.getContent();

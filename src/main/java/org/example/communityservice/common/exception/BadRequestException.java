@@ -1,4 +1,4 @@
-package org.example.communityservice.common.Exception;
+package org.example.communityservice.common.exception;
 
 import org.springframework.http.HttpStatus;
 

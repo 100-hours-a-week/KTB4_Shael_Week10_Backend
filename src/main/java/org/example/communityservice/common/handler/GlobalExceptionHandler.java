@@ -1,6 +1,6 @@
-package org.example.communityservice.common;
+package org.example.communityservice.common.handler;
 
-import org.example.communityservice.common.Exception.BusinessException;
+import org.example.communityservice.common.exception.BusinessException;
 import org.example.communityservice.common.dto.CommonResponseDto;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;

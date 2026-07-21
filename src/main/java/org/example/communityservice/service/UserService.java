@@ -2,9 +2,9 @@ package org.example.communityservice.service;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.communityservice.common.Exception.BadRequestException;
-import org.example.communityservice.common.Exception.FileStorageException;
-import org.example.communityservice.common.Exception.UnauthorizedException;
+import org.example.communityservice.common.exception.BadRequestException;
+import org.example.communityservice.common.exception.FileStorageException;
+import org.example.communityservice.common.exception.UnauthorizedException;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
 import org.example.communityservice.dto.user.request.UserCreateRequestDto;
@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Validated
@@ -34,7 +35,7 @@ public class UserService {
     private static final String DEFAULT_PROFILE_IMAGE = "test_image.png";
 
     public UserLoginResponseDto login(@Valid UserLoginRequestDto userLoginRequestDto){
-        User user = userRepository.findByEmail(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("login_failed"));
+        User user = userRepository.findByEmailAndDeletedAtIsNull(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("login_failed"));
 
         if(!user.getPassword().equals(userLoginRequestDto.getPassword())){
             throw new UnauthorizedException("login_failed");
@@ -81,14 +82,14 @@ public class UserService {
     }
 
     public UserInfoResponseDto showInfo(Long userId){
-        return new UserInfoResponseDto(userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required")));
+        return new UserInfoResponseDto(userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required")));
     }
 
     @Transactional
     public UserInfoResponseDto updateInfo(Long userId, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto, MultipartFile profileImage){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         if(userInfoUpdateRequestDto.getEmail()==null && userInfoUpdateRequestDto.getNickname()==null && profileImage==null) {
             throw new BadRequestException("invalid_request");
         }
@@ -138,7 +139,7 @@ public class UserService {
 
     @Transactional
     public void updatePassword(Long userId, @Valid UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
         user.changePassword(userPasswordUpdateRequestDto.getPassword());
         user.changeUpdatedAt(LocalDateTime.now());
@@ -146,11 +147,15 @@ public class UserService {
 
     @Transactional
     public void withdrawal(Long userId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
         String profileStoredFilename = user.getProfileStoredFilename();
 
-        userRepository.delete(user);
+        String deletedEmail = "deleted_" + userId + "@delete.invalid";
+        String deletedNickname = "탈퇴" + userId;
+        String deletedPassword = UUID.randomUUID().toString();
+
+        user.withdraw(deletedEmail, deletedNickname, deletedPassword);
         userRepository.flush();
 
         if(!DEFAULT_PROFILE_IMAGE.equals(profileStoredFilename)){

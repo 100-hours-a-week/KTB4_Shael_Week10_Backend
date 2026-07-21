@@ -1,6 +1,6 @@
 package org.example.communityservice.storage;
 
-import org.example.communityservice.common.Exception.FileStorageException;
+import org.example.communityservice.common.exception.FileStorageException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

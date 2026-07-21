@@ -25,6 +25,9 @@ public class Comment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
@@ -52,5 +55,11 @@ public class Comment {
 
     public void changeUpdatedAt(){
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void deleteComment(){
+        this.content = "삭제된 댓글";
+        this.updatedAt = LocalDateTime.now();
+        this.deletedAt = LocalDateTime.now();
     }
 }

@@ -5,12 +5,13 @@ INSERT INTO users (
     nickname,
     profile_stored_filename,
     created_at,
-    updated_at
+    updated_at,
+    deleted_at
 ) VALUES
-      (1, 'minji@example.com', 'Minji1234!', '민지', 'test_image.png', '2026-06-01 09:00:00', NULL),
-      (2, 'junho@example.com', 'Junho1234@', '준호', 'test_image.png', '2026-06-01 09:15:00', NULL),
-      (3, 'seoyeon@example.com', 'Seoyeon1234#', '서연', 'test_image.png', '2026-06-01 09:30:00', NULL),
-      (4, 'hyunwoo@example.com', 'Hyunwoo1234$', '현우', 'test_image.png', '2026-06-01 09:45:00', NULL);
+      (1, 'minji@example.com', 'Minji1234!', '민지', 'test_image.png', '2026-06-01 09:00:00', NULL, NULL),
+      (2, 'junho@example.com', 'Junho1234@', '준호', 'test_image.png', '2026-06-01 09:15:00', NULL, NULL),
+      (3, 'seoyeon@example.com', 'Seoyeon1234#', '서연', 'test_image.png', '2026-06-01 09:30:00', NULL, NULL),
+      (4, 'hyunwoo@example.com', 'Hyunwoo1234$', '현우', 'test_image.png', '2026-06-01 09:45:00', NULL, NULL);
 
 INSERT INTO posts (
     post_id,
@@ -48,16 +49,17 @@ INSERT INTO comments (
     writer_id,
     content,
     created_at,
-    updated_at
+    updated_at,
+    deleted_at
 ) VALUES
-      (1, 1, NULL, 2, '산책 코스 좋아 보이네요.', '2026-06-02 10:10:00', NULL),
-      (2, 1, 1, 1, '근처 공원인데 조용해서 좋았어요.', '2026-06-02 10:15:00', NULL),
-      (3, 1, 2, 3, '저도 다음에 가봐야겠네요.', '2026-06-02 10:20:00', NULL),
+      (1, 1, NULL, 2, '산책 코스 좋아 보이네요.', '2026-06-02 10:10:00', NULL, NULL),
+      (2, 1, 1, 1, '근처 공원인데 조용해서 좋았어요.', '2026-06-02 10:15:00', NULL, NULL),
+      (3, 1, 2, 3, '저도 다음에 가봐야겠네요.', '2026-06-02 10:20:00', NULL, NULL),
 
-      (4, 2, NULL, 3, '저도 JPA 공부 중인데 어렵더라고요.', '2026-06-02 11:30:00', NULL),
-      (5, 2, 4, 2, '맞아요. 특히 연관관계가 헷갈려요.', '2026-06-02 11:35:00', NULL),
+      (4, 2, NULL, 3, '저도 JPA 공부 중인데 어렵더라고요.', '2026-06-02 11:30:00', NULL, NULL),
+      (5, 2, 4, 2, '맞아요. 특히 연관관계가 헷갈려요.', '2026-06-02 11:35:00', NULL, NULL),
 
-      (6, 3, NULL, 4, '김치찌개 좋네요. 저녁으로 먹어야겠어요.', '2026-06-02 12:20:00', NULL);
+      (6, 3, NULL, 4, '김치찌개 좋네요. 저녁으로 먹어야겠어요.', '2026-06-02 12:20:00', NULL, NULL);
 
 INSERT INTO post_likes (
     post_like_id,

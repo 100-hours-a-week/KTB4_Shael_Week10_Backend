@@ -2,7 +2,7 @@ package org.example.communityservice.service;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.communityservice.common.Exception.*;
+import org.example.communityservice.common.exception.*;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
 import org.example.communityservice.dto.comment.response.CommentResponseDto;
@@ -37,7 +37,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostListCursorResponseDto showPostList(Long userId, Long cursor){
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
         Pageable pageable = PageRequest.of(0, 10);
         Slice<Post> postSlice;
@@ -69,7 +69,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto createPost(Long userId, @Valid PostRequestDto postRequestDto, List<MultipartFile> images){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         validateImages(images);
 
         Post post = new Post(user, postRequestDto.getTitle(), postRequestDto.getContent(), 0, 0, 0);
@@ -103,7 +103,7 @@ public class PostService {
 
     @Transactional
     public PostDetailResponseDto showPostDetail(Long userId, Long postId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         post.increaseViewCount();
 
@@ -141,7 +141,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto updatePost(Long userId, Long postId, @Valid PostUpdateRequestDto postUpdateRequestDto, List<MultipartFile> images){
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException ("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
         if(!userId.equals(post.getUser().getUserId())){
@@ -200,7 +200,7 @@ public class PostService {
 
     @Transactional
     public void deletePost(Long userId, Long postId){
-        userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
         if(!userId.equals(post.getUser().getUserId())){
@@ -208,6 +208,9 @@ public class PostService {
         }
 
         List<String> storedFilenames = postImageRepository.findStoredFilenamesByPostId(postId);
+        postLikeRepository.deleteAllByPost_PostId(postId);
+        commentRepository.deleteAllByPost_PostId(postId);
+        postImageRepository.deleteAllByPost_PostId(postId);
 
         postRepository.delete(post);
         postRepository.flush();
@@ -219,7 +222,7 @@ public class PostService {
 
     @Transactional
     public PostLikeCountResponseDto toggleLike(Long userId, Long postId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
 
         boolean isLiked;

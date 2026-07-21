@@ -3,6 +3,7 @@ package org.example.communityservice.dto.post.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
+import org.example.communityservice.common.util.UserDisplayUtils;
 import org.example.communityservice.entity.Post;
 
 import java.time.LocalDateTime;
@@ -35,8 +36,8 @@ public class PostListResponseDto {
     public PostListResponseDto(Post post){
         this.postId = post.getPostId();
         this.title = post.getTitle();
-        this.writerNickname = post.getUser().getNickname();
-        this.writerProfileImage = "/images/profiles/" + post.getUser().getProfileStoredFilename();
+        this.writerNickname = UserDisplayUtils.nickname(post.getUser());
+        this.writerProfileImage = UserDisplayUtils.profileStoredFilename(post.getUser());
         this.likeCount = post.getLikeCount();
         this.commentCount = post.getCommentCount();
         this.viewCount = post.getViewCount();

@@ -21,4 +21,6 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
     List<String> findStoredFilenamesByPostId(
             @Param("postId") Long postId
     );
+
+    void deleteAllByPost_PostId(Long postId);
 }

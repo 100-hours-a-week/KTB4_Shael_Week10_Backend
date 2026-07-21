@@ -3,6 +3,7 @@ package org.example.communityservice.dto.comment.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
+import org.example.communityservice.common.util.UserDisplayUtils;
 import org.example.communityservice.entity.Comment;
 import org.example.communityservice.entity.User;
 
@@ -43,7 +44,7 @@ public class CommentCreateResponseDto {
             this.parentCommentId = null;
         }
         this.writerId = user.getUserId();
-        this.writerProfileImage = "/images/profiles/" + user.getProfileStoredFilename();
+        this.writerProfileImage = UserDisplayUtils.profileStoredFilename(user);
         this.writerNickname = user.getNickname();
         this.isOwner = (comment.getUser().getUserId()).equals(user.getUserId());
         this.content = comment.getContent();

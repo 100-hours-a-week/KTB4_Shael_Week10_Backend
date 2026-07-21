@@ -23,7 +23,7 @@ public class User {
     @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false, unique = true, length = 10)
+    @Column(nullable = false, unique = true, length = 30)
     private String nickname;
 
     @Column(name = "profile_stored_filename", nullable = false, length = 500)
@@ -34,6 +34,9 @@ public class User {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     public User(UserCreateRequestDto userCreateRequestDto, String profileStoredFilename){
         this.email = userCreateRequestDto.getEmail();
@@ -67,5 +70,14 @@ public class User {
 
     public void changeUpdatedAt(LocalDateTime updatedAt){
         this.updatedAt = updatedAt;
+    }
+
+    public void withdraw(String deletedEmail, String deletedNickname, String deletedPassword){
+        this.email = deletedEmail;
+        this.nickname = deletedNickname;
+        this.password = deletedPassword;
+        this.profileStoredFilename = "test_image.png";
+        this.updatedAt = LocalDateTime.now();
+        this.deletedAt = LocalDateTime.now();
     }
 }

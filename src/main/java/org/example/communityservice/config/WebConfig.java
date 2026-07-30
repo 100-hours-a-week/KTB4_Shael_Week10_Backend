@@ -23,6 +23,6 @@ public class WebConfig implements WebMvcConfigurer {
         String profileLocation = Paths.get(profileUploadDir).toAbsolutePath().normalize().toUri().toString();
 
         registry.addResourceHandler("/images/posts/**").addResourceLocations(postLocation);
-        registry.addResourceHandler("images/profiles/**").addResourceLocations(profileLocation);
+        registry.addResourceHandler("/images/profiles/**").addResourceLocations(profileLocation);
     }
 }

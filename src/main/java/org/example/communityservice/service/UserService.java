@@ -1,5 +1,6 @@
 package org.example.communityservice.service;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.communityservice.common.exception.BadRequestException;
@@ -7,16 +8,24 @@ import org.example.communityservice.common.exception.FileStorageException;
 import org.example.communityservice.common.exception.UnauthorizedException;
 import org.example.communityservice.common.dto.ErrorInfoDto;
 import org.example.communityservice.common.dto.ErrorResponseDto;
+import org.example.communityservice.common.security.JwtProvider;
+import org.example.communityservice.common.security.RefreshTokenHasher;
+import org.example.communityservice.dto.token.TokenInfoDto;
+import org.example.communityservice.dto.token.TokenResultDto;
 import org.example.communityservice.dto.user.request.UserCreateRequestDto;
 import org.example.communityservice.dto.user.request.UserInfoUpdateRequestDto;
 import org.example.communityservice.dto.user.request.UserLoginRequestDto;
 import org.example.communityservice.dto.user.request.UserPasswordUpdateRequestDto;
 import org.example.communityservice.dto.user.response.UserInfoResponseDto;
 import org.example.communityservice.dto.user.response.UserLoginResponseDto;
+import org.example.communityservice.dto.user.response.UserLoginResultDto;
+import org.example.communityservice.entity.RefreshToken;
 import org.example.communityservice.entity.User;
+import org.example.communityservice.repository.RefreshTokenRepository;
 import org.example.communityservice.repository.UserRepository;
 import org.example.communityservice.storage.ProfileImageStorage;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,18 +40,76 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRevoker refreshTokenRevoker;
+    private final JwtProvider jwtProvider;
+    private final RefreshTokenHasher refreshTokenHasher;
+    private final PasswordEncoder passwordEncoder;
     private final ProfileImageStorage profileImageStorage;
     private static final String DEFAULT_PROFILE_IMAGE = "test_image.png";
 
-    public UserLoginResponseDto login(@Valid UserLoginRequestDto userLoginRequestDto){
+    @Transactional
+    public UserLoginResultDto login(@Valid UserLoginRequestDto userLoginRequestDto){
         User user = userRepository.findByEmailAndDeletedAtIsNull(userLoginRequestDto.getEmail()).orElseThrow(() -> new UnauthorizedException("login_failed"));
 
-        if(!user.getPassword().equals(userLoginRequestDto.getPassword())){
+        if(!passwordEncoder.matches(userLoginRequestDto.getPassword(), user.getPassword())){
             throw new UnauthorizedException("login_failed");
         }
 
-        String profileImage = "/images/profiles/" + user.getProfileStoredFilename();
-        return new UserLoginResponseDto(user.getUserId(), user.getEmail(), user.getNickname(), profileImage);
+        String accessToken = jwtProvider.createAccessToken(user.getUserId());
+
+        String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
+        String refreshTokenHash = refreshTokenHasher.hash(refreshToken);
+        refreshTokenRepository.deleteByUserId(user.getUserId());
+        refreshTokenRepository.save(new RefreshToken(
+                refreshTokenHash,
+                user.getUserId(),
+                LocalDateTime.now().plusSeconds(jwtProvider.getRefreshTokenValidityInSeconds())));
+
+        return new UserLoginResultDto(UserLoginResponseDto.of(user, accessToken, jwtProvider.getAccessTokenValidityInMilliseconds()), refreshToken);
+    }
+
+    @Transactional
+    public TokenResultDto refreshAccessToken(String refreshToken){
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new UnauthorizedException("unauthorized");
+        }
+
+        String refreshTokenHash = refreshTokenHasher.hash(refreshToken);
+        RefreshToken saved = refreshTokenRepository.findByToken(refreshTokenHash).orElseThrow(() -> new UnauthorizedException("unauthorized"));
+
+        if(saved.isExpired()){
+            refreshTokenRevoker.revokeHash(refreshTokenHash);
+            throw new UnauthorizedException("unauthorized");
+        }
+
+        Long tokenUserId;
+        try {
+            tokenUserId = jwtProvider.getRefreshTokenUserId(refreshToken);
+        } catch (JwtException | IllegalArgumentException exception) {
+            refreshTokenRevoker.revokeHash(refreshTokenHash);
+            throw new UnauthorizedException("unauthorized");
+        }
+
+        if (!tokenUserId.equals(saved.getUserId())) {
+            refreshTokenRevoker.revokeHash(refreshTokenHash);
+            throw new UnauthorizedException("unauthorized");
+        }
+
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(saved.getUserId()).orElseThrow(() -> new UnauthorizedException("unauthorized"));
+
+        String newAccessToken = jwtProvider.createAccessToken(user.getUserId());
+        String newRefreshToken = jwtProvider.createRefreshToken(user.getUserId());
+        String newRefreshTokenHash = refreshTokenHasher.hash(newRefreshToken);
+        refreshTokenRepository.delete(saved);
+        refreshTokenRepository.save(new RefreshToken(
+                newRefreshTokenHash,
+                user.getUserId(),
+                LocalDateTime.now().plusSeconds(jwtProvider.getRefreshTokenValidityInSeconds())));
+
+        return new TokenResultDto(
+                new TokenInfoDto(newAccessToken, jwtProvider.getAccessTokenValidityInMilliseconds()),
+                newRefreshToken);
     }
 
     @Transactional
@@ -66,7 +133,8 @@ public class UserService {
         }
 
         try{
-            userRepository.save(new User(userCreateRequestDto, profileStoredFilename));
+            String encodedPassword = passwordEncoder.encode(userCreateRequestDto.getPassword());
+            userRepository.save(new User(userCreateRequestDto, encodedPassword, profileStoredFilename));
             userRepository.flush();
         }
         catch (RuntimeException e){
@@ -141,8 +209,17 @@ public class UserService {
     public void updatePassword(Long userId, @Valid UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
 
-        user.changePassword(userPasswordUpdateRequestDto.getPassword());
+        user.changePassword(passwordEncoder.encode(userPasswordUpdateRequestDto.getPassword()));
+        refreshTokenRepository.deleteByUserId(userId);
         user.changeUpdatedAt(LocalDateTime.now());
+    }
+
+    @Transactional
+    public void logout(Long userId) {
+        userRepository.findByUserIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new UnauthorizedException("login_required"));
+
+        refreshTokenRepository.deleteByUserId(userId);
     }
 
     @Transactional
@@ -156,6 +233,7 @@ public class UserService {
         String deletedPassword = UUID.randomUUID().toString();
 
         user.withdraw(deletedEmail, deletedNickname, deletedPassword);
+        refreshTokenRepository.deleteByUserId(userId);
         userRepository.flush();
 
         if(!DEFAULT_PROFILE_IMAGE.equals(profileStoredFilename)){

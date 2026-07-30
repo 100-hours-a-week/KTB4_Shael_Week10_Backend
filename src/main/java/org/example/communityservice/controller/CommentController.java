@@ -10,31 +10,41 @@ import org.example.communityservice.dto.comment.response.CommentUpdateResponseDt
 import org.example.communityservice.service.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{userId}/posts/{postId}/comment")
-@CrossOrigin(origins = "http://127.0.0.1:5500")
+@RequestMapping("/posts/{postId}/comment")
 public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommonResponseDto<CommentCreateResponseDto>> createComment(@PathVariable Long userId, @PathVariable Long postId, @Valid @RequestBody CommentRequestDto commentRequestDto){
+    public ResponseEntity<CommonResponseDto<CommentCreateResponseDto>> createComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId,
+            @Valid @RequestBody CommentRequestDto commentRequestDto){
         CommentCreateResponseDto commentCreateResponseDto = commentService.createComment(userId, postId, commentRequestDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new CommonResponseDto<>("register_success", commentCreateResponseDto));
     }
 
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommonResponseDto<CommentUpdateResponseDto>> updateComment(@PathVariable Long userId, @PathVariable Long postId, @PathVariable Long commentId, @Valid @RequestBody CommentRequestDto commentRequestDto){
+    public ResponseEntity<CommonResponseDto<CommentUpdateResponseDto>> updateComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @Valid @RequestBody CommentRequestDto commentRequestDto){
         CommentUpdateResponseDto commentUpdateResponseDto = commentService.updateComment(userId, postId, commentId, commentRequestDto);
 
         return ResponseEntity.ok(new CommonResponseDto<>("update_success", commentUpdateResponseDto));
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<CommonResponseDto<CommentDeleteResponseDto>> deleteComment(@PathVariable Long userId, @PathVariable Long postId, @PathVariable Long commentId){
+    public ResponseEntity<CommonResponseDto<CommentDeleteResponseDto>> deleteComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId,
+            @PathVariable Long commentId){
         CommentDeleteResponseDto commentDeleteResponseDto = commentService.deleteComment(userId, postId, commentId);
 
         return ResponseEntity.ok(new CommonResponseDto<>("delete_success", commentDeleteResponseDto));

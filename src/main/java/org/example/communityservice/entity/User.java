@@ -38,9 +38,9 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public User(UserCreateRequestDto userCreateRequestDto, String profileStoredFilename){
+    public User(UserCreateRequestDto userCreateRequestDto, String encodedPassword, String profileStoredFilename){
         this.email = userCreateRequestDto.getEmail();
-        this.password = userCreateRequestDto.getPassword();
+        this.password = encodedPassword;
         this.nickname = userCreateRequestDto.getNickname();
 
         if(profileStoredFilename==null){

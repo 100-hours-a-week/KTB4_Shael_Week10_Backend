@@ -8,10 +8,10 @@ INSERT INTO users (
     updated_at,
     deleted_at
 ) VALUES
-      (1, 'minji@example.com', 'Minji1234!', '민지', 'test_image.png', '2026-06-01 09:00:00', NULL, NULL),
-      (2, 'junho@example.com', 'Junho1234@', '준호', 'test_image.png', '2026-06-01 09:15:00', NULL, NULL),
-      (3, 'seoyeon@example.com', 'Seoyeon1234#', '서연', 'test_image.png', '2026-06-01 09:30:00', NULL, NULL),
-      (4, 'hyunwoo@example.com', 'Hyunwoo1234$', '현우', 'test_image.png', '2026-06-01 09:45:00', NULL, NULL);
+      (1, 'minji@example.com', '$2y$10$qUETSh6Wr/QS0s8Dijb0gusgEz1AiS98Tz/LcCYUeJxqL3OzzZ0xG', '민지', 'test_image.png', '2026-06-01 09:00:00', NULL, NULL),
+      (2, 'junho@example.com', '$2y$10$vhuw6krWvi65sBN5YEnWfe/QxOwWV.baNmT07lByOFBOdIhrNYd66', '준호', 'test_image.png', '2026-06-01 09:15:00', NULL, NULL),
+      (3, 'seoyeon@example.com', '$2y$10$Esq/mUy2dLg6XlBi6Umtw..B8si967BgiI1Ti6GSc.r0.yopuxiRC', '서연', 'test_image.png', '2026-06-01 09:30:00', NULL, NULL),
+      (4, 'hyunwoo@example.com', '$2y$10$Zz6i2NUcDqBP.olJhlZU.uzo8UgaWAgVY2/hCODn6Cur1Oyxbql46', '현우', 'test_image.png', '2026-06-01 09:45:00', NULL, NULL);
 
 INSERT INTO posts (
     post_id,

@@ -38,6 +38,9 @@ public class CommentService {
         Comment parentComment;
         if(commentRequestDto.getParentCommentId()!=null){
             parentComment = commentRepository.findById(commentRequestDto.getParentCommentId()).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("parent_comment", "not_exist")))));
+            if (!postId.equals(parentComment.getPost().getPostId())) {
+                throw new BadRequestException("invalid_request");
+            }
         }
         else{
             parentComment = null;
@@ -55,6 +58,9 @@ public class CommentService {
         userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist")))));
+        if (!postId.equals(comment.getPost().getPostId())) {
+            throw new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist"))));
+        }
         if(!userId.equals(comment.getUser().getUserId())){
             throw new ForbiddenException();
         }
@@ -69,6 +75,9 @@ public class CommentService {
         userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("post", "not_exist")))));
         Comment comment = commentRepository.findByCommentIdAndDeletedAtIsNull(commentId).orElseThrow(() -> new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist")))));
+        if (!postId.equals(comment.getPost().getPostId())) {
+            throw new NotFoundException("not_found", new ErrorResponseDto(List.of(new ErrorInfoDto("comment", "not_exist"))));
+        }
         if(!userId.equals(comment.getUser().getUserId())){
             throw new ForbiddenException();
         }

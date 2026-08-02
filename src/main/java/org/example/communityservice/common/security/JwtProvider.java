@@ -12,7 +12,6 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +28,6 @@ public class JwtProvider {
         Instant now = Instant.now();
 
         return Jwts.builder().subject(String.valueOf(userId))
-                .id(UUID.randomUUID().toString())
                 .claim("typ", type)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expSeconds)))

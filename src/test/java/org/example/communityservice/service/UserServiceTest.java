@@ -7,7 +7,7 @@ import org.example.communityservice.common.security.JwtProvider;
 import org.example.communityservice.common.security.RefreshTokenHasher;
 import org.example.communityservice.dto.token.TokenResultDto;
 import org.example.communityservice.dto.user.request.UserCreateRequestDto;
-import org.example.communityservice.dto.user.request.UserInfoUpdateRequestDto;
+import org.example.communityservice.dto.user.request.UserNicknameUpdateRequestDto;
 import org.example.communityservice.dto.user.request.UserLoginRequestDto;
 import org.example.communityservice.dto.user.request.UserPasswordUpdateRequestDto;
 import org.example.communityservice.dto.user.response.UserInfoResponseDto;
@@ -594,8 +594,8 @@ class UserServiceTest {
     }
 
     @Test
-    void 이메일과_닉네임_변경에_성공한다() {
-        UserInfoUpdateRequestDto request = new UserInfoUpdateRequestDto("new@example.com", "new 테스터");
+    void 닉네임_변경에_성공한다() {
+        UserNicknameUpdateRequestDto request = new UserNicknameUpdateRequestDto("new 테스터");
 
         Long userId = 3L;
         User user = new User(
@@ -610,15 +610,12 @@ class UserServiceTest {
 
         when(userRepository.findByUserIdAndDeletedAtIsNull(userId))
                 .thenReturn(Optional.of(user));
-        when(userRepository.existsByEmail(request.getEmail()))
-                .thenReturn(false);
         when(userRepository.existsByNickname(request.getNickname()))
                 .thenReturn(false);
 
         UserInfoResponseDto response = userService.updateInfo(userId, request, null);
 
         verify(userRepository).findByUserIdAndDeletedAtIsNull(userId);
-        verify(userRepository).existsByEmail("new@example.com");
         verify(userRepository).existsByNickname("new 테스터");
         verify(profileImageStorage, never()).store(any());
         verify(userRepository).flush();
@@ -631,42 +628,8 @@ class UserServiceTest {
     }
 
     @Test
-    void 이메일이_중복되면_회원정보_수정에_실패한다(){
-        UserInfoUpdateRequestDto request = new UserInfoUpdateRequestDto("duplicate@example.com", null);
-
-        Long userId = 3L;
-        User user = new User(
-                new UserCreateRequestDto(
-                        "old@example.com",
-                        "Test1234!",
-                        "old 테스터"
-                ),
-                "encoded-password",
-                "old_profile_img"
-        );
-
-        when(userRepository.findByUserIdAndDeletedAtIsNull(userId))
-                .thenReturn(Optional.of(user));
-        when(userRepository.existsByEmail(request.getEmail()))
-                .thenReturn(true);
-
-        assertThatThrownBy(() -> userService.updateInfo(userId, request, null))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessage("invalid_request");
-        assertThat(user.getEmail()).isEqualTo("old@example.com");
-        assertThat(user.getNickname()).isEqualTo("old 테스터");
-
-        verify(userRepository).findByUserIdAndDeletedAtIsNull(userId);
-        verify(userRepository).existsByEmail(request.getEmail());
-        verify(userRepository, never()).existsByNickname(anyString());
-        verify(profileImageStorage, never()).store(any());
-        verify(userRepository, never()).flush();
-        verify(profileImageStorage, never()).delete(anyString());
-    }
-
-    @Test
     void 닉네임이_중복되면_회원정보_수정에_실패한다(){
-        UserInfoUpdateRequestDto request = new UserInfoUpdateRequestDto(null, "중복닉네임");
+        UserNicknameUpdateRequestDto request = new UserNicknameUpdateRequestDto("중복닉네임");
 
         Long userId = 3L;
         User user = new User(
@@ -687,11 +650,9 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateInfo(userId, request, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("invalid_request");
-        assertThat(user.getEmail()).isEqualTo("old@example.com");
         assertThat(user.getNickname()).isEqualTo("old 테스터");
 
         verify(userRepository).findByUserIdAndDeletedAtIsNull(userId);
-        verify(userRepository, never()).existsByEmail(request.getEmail());
         verify(userRepository).existsByNickname(request.getNickname());
         verify(profileImageStorage, never()).store(any());
         verify(userRepository, never()).flush();
@@ -700,7 +661,7 @@ class UserServiceTest {
 
     @Test
     void 프로필_이미지_변경에_성공한다(){
-        UserInfoUpdateRequestDto request = new UserInfoUpdateRequestDto();
+        UserNicknameUpdateRequestDto request = new UserNicknameUpdateRequestDto();
         MultipartFile newProfileImg = mock(MultipartFile.class);
 
         Long userId = 3L;
@@ -733,7 +694,7 @@ class UserServiceTest {
 
     @Test
     void 프로필_이미지_변경에_실패하면_새로_저장된_이미지만_삭제한다(){
-        UserInfoUpdateRequestDto request = new UserInfoUpdateRequestDto();
+        UserNicknameUpdateRequestDto request = new UserNicknameUpdateRequestDto();
         MultipartFile newProfileImg = mock(MultipartFile.class);
         RuntimeException flushException = new RuntimeException("사용자 정보 저장 실패");
 
@@ -766,7 +727,7 @@ class UserServiceTest {
 
     @Test
     void 변경할_사용자_정보가_없으면_회원정보_수정에_실패한다(){
-        UserInfoUpdateRequestDto request = new UserInfoUpdateRequestDto();
+        UserNicknameUpdateRequestDto request = new UserNicknameUpdateRequestDto();
         Long userId = 3L;
         User user = new User(
                 new UserCreateRequestDto(

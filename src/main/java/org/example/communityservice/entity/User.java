@@ -52,10 +52,6 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void changeEmail(String email){
-        this.email = email;
-    }
-
     public void changePassword(String password){
         this.password = password;
     }

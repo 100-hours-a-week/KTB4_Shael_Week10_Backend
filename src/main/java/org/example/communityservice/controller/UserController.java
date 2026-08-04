@@ -7,7 +7,7 @@ import org.example.communityservice.common.dto.CommonResponseDto;
 import org.example.communityservice.dto.token.TokenInfoDto;
 import org.example.communityservice.dto.token.TokenResultDto;
 import org.example.communityservice.dto.user.request.UserCreateRequestDto;
-import org.example.communityservice.dto.user.request.UserInfoUpdateRequestDto;
+import org.example.communityservice.dto.user.request.UserNicknameUpdateRequestDto;
 import org.example.communityservice.dto.user.request.UserLoginRequestDto;
 import org.example.communityservice.dto.user.request.UserPasswordUpdateRequestDto;
 import org.example.communityservice.dto.user.response.UserInfoResponseDto;
@@ -98,9 +98,9 @@ public class UserController {
     @PatchMapping(value = "/user/info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponseDto<UserInfoResponseDto>> updateInfo(
             @AuthenticationPrincipal Long userId,
-            @Valid @RequestPart("content") UserInfoUpdateRequestDto userInfoUpdateRequestDto,
+            @Valid @RequestPart("content") UserNicknameUpdateRequestDto userNicknameUpdateRequestDto,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage){
-        UserInfoResponseDto userInfoResponseDto = userService.updateInfo(userId, userInfoUpdateRequestDto, profileImage);
+        UserInfoResponseDto userInfoResponseDto = userService.updateInfo(userId, userNicknameUpdateRequestDto, profileImage);
 
         return ResponseEntity.ok(new CommonResponseDto<>("update_success", userInfoResponseDto));
     }

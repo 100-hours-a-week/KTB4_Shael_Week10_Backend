@@ -13,7 +13,7 @@ import org.example.communityservice.common.security.RefreshTokenHasher;
 import org.example.communityservice.dto.token.TokenInfoDto;
 import org.example.communityservice.dto.token.TokenResultDto;
 import org.example.communityservice.dto.user.request.UserCreateRequestDto;
-import org.example.communityservice.dto.user.request.UserInfoUpdateRequestDto;
+import org.example.communityservice.dto.user.request.UserNicknameUpdateRequestDto;
 import org.example.communityservice.dto.user.request.UserLoginRequestDto;
 import org.example.communityservice.dto.user.request.UserPasswordUpdateRequestDto;
 import org.example.communityservice.dto.user.response.UserInfoResponseDto;
@@ -154,17 +154,14 @@ public class UserService {
     }
 
     @Transactional
-    public UserInfoResponseDto updateInfo(Long userId, @Valid UserInfoUpdateRequestDto userInfoUpdateRequestDto, MultipartFile profileImage){
+    public UserInfoResponseDto updateInfo(Long userId, @Valid UserNicknameUpdateRequestDto userNicknameUpdateRequestDto, MultipartFile profileImage){
         List<ErrorInfoDto> errorInfoDtoList = new ArrayList<>();
 
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId).orElseThrow(() -> new UnauthorizedException("login_required"));
-        if(userInfoUpdateRequestDto.getEmail()==null && userInfoUpdateRequestDto.getNickname()==null && profileImage==null) {
+        if(userNicknameUpdateRequestDto.getNickname()==null && profileImage==null) {
             throw new BadRequestException("invalid_request");
         }
-        if(userInfoUpdateRequestDto.getEmail()!=null && !user.getEmail().equals(userInfoUpdateRequestDto.getEmail()) && userRepository.existsByEmail(userInfoUpdateRequestDto.getEmail())) {
-            errorInfoDtoList.add(new ErrorInfoDto("email", "중복된 이메일입니다."));
-        }
-        if(userInfoUpdateRequestDto.getNickname()!=null && !user.getNickname().equals(userInfoUpdateRequestDto.getNickname()) && userRepository.existsByNickname(userInfoUpdateRequestDto.getNickname())){
+        if(userNicknameUpdateRequestDto.getNickname()!=null && !user.getNickname().equals(userNicknameUpdateRequestDto.getNickname()) && userRepository.existsByNickname(userNicknameUpdateRequestDto.getNickname())){
             errorInfoDtoList.add(new ErrorInfoDto("nickname", "중복된 닉네임입니다."));
         }
         if(!errorInfoDtoList.isEmpty()){
@@ -175,11 +172,8 @@ public class UserService {
         String newProfileStoredFilename = null;
 
         try {
-            if (userInfoUpdateRequestDto.getEmail() != null) {
-                user.changeEmail(userInfoUpdateRequestDto.getEmail());
-            }
-            if (userInfoUpdateRequestDto.getNickname() != null) {
-                user.changeNickname(userInfoUpdateRequestDto.getNickname());
+            if (userNicknameUpdateRequestDto.getNickname() != null) {
+                user.changeNickname(userNicknameUpdateRequestDto.getNickname());
             }
             if (profileImage != null && !profileImage.isEmpty()) {
                 newProfileStoredFilename = profileImageStorage.store(profileImage);

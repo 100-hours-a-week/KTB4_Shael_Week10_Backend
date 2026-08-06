@@ -126,7 +126,7 @@ public class PostService {
             isLiked = true;
         }
 
-        List<Comment> commentList = commentRepository.findByPost_PostIdOrderByCreatedAtDesc(postId);
+        List<Comment> commentList = commentRepository.findVisibleCommentsByPostId(postId);
         if(commentList.isEmpty()){
             return new PostDetailResponseDto(post, isOwner, postImageResponseDtoList, isLiked, null);
         }

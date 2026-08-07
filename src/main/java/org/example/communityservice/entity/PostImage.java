@@ -20,9 +20,6 @@ public class PostImage {
     @Column(name = "post_image_id")
     private Long postImageId;
 
-    @Column(name = "original_filename", nullable = false, length = 500)
-    private String originalFilename;
-
     @Column(name = "stored_filename", nullable = false, length = 100)
     private String storedFilename;
 
@@ -36,9 +33,8 @@ public class PostImage {
     private Post post;
 
 
-    public PostImage(Post post, String originalFilename, String storedFilename, int imageOrder){
+    public PostImage(Post post, String storedFilename, int imageOrder){
         this.post = post;
-        this.originalFilename = originalFilename;
         this.storedFilename = storedFilename;
         this.imageOrder = imageOrder;
     }

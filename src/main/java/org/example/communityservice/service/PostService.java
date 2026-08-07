@@ -81,7 +81,7 @@ public class PostService {
             MultipartFile image = images.get(i);
 
             String storedFilename = postImageStorage.store(image);
-            PostImage postImage = new PostImage(post, image.getOriginalFilename(), storedFilename, i+1);
+            PostImage postImage = new PostImage(post, storedFilename, i+1);
 
             postImageList.add(postImage);
         }
@@ -179,7 +179,7 @@ public class PostService {
                 String storedFilename = postImageStorage.store(image);
                 newStoredFilenames.add(storedFilename);
 
-                newPostImages.add(new PostImage(post, image.getOriginalFilename(), storedFilename, i+1));
+                newPostImages.add(new PostImage(post, storedFilename, i+1));
             }
             postImageRepository.deleteAll(existingImages);
             postImageRepository.flush();
